@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>NCヘッダージェネレーター</title>
+<link rel="icon" type="image/png" href="app-icon.png">
+<style>
+  :root{
+    --bg:#03050a;
+    --bg2:#070b14;
+    --neon:#00d9ff;
+    --neon-dim:#0a4d63;
+    --neon-pink:#ff2e88;
+    --text:#e8fbff;
+    --text-dim:#7fa8b8;
+    --card:#0a0f1a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(0,217,255,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(255,46,136,0.06), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family: "Yu Mincho", "游明朝", "Hiragino Mincho ProN", "HGS明朝E", serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .app{
+    width:100%;
+    max-width:560px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:18px;
+  }
+  header h1{
+    font-size:20px;
+    letter-spacing:2px;
+    margin:0 0 4px;
+    color:var(--neon);
+    text-shadow:0 0 6px var(--neon), 0 0 18px rgba(0,217,255,0.5);
+  }
+  header .sub{
+    font-size:12px;
+    color:var(--text-dim);
+    letter-spacing:1px;
+  }
+  .lang-bar{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:8px;
+  }
+  .lang-bar select{
+    background:var(--card);
+    color:var(--neon);
+    border:1px solid var(--neon-dim);
+    border-radius:6px;
+    padding:4px 8px;
+    font-size:12px;
+  }
+  .progress-wrap{
+    margin-bottom:20px;
+  }
+  .progress-label{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-bottom:6px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .progress-bar{
+    height:6px;
+    background:#0d1622;
+    border-radius:4px;
+    overflow:hidden;
+    border:1px solid var(--neon-dim);
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--neon), #66f0ff);
+    box-shadow:0 0 10px var(--neon);
+    transition:width .3s ease;
+  }
+  .card{
+    background:linear-gradient(180deg, var(--card), #060a12);
+    border:1px solid var(--neon-dim);
+    border-radius:16px;
+    padding:28px 24px;
+    box-shadow:
+      0 0 0 1px rgba(0,217,255,0.05),
+      0 0 30px rgba(0,217,255,0.08),
+      inset 0 0 40px rgba(0,217,255,0.02);
+    min-height:260px;
+    display:flex;
+    flex-direction:column;
+  }
+  .q-num{
+    font-size:11px;
+    letter-spacing:2px;
+    color:var(--neon);
+    text-shadow:0 0 6px rgba(0,217,255,0.6);
+    margin-bottom:6px;
+  }
+  .q-title{
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--text);
+  }
+  .q-hint{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-bottom:18px;
+    line-height:1.6;
+  }
+  .field{
+    margin-bottom:14px;
+  }
+  select, input[type=number], input[type=text]{
+    width:100%;
+    background:#0c1320;
+    border:1px solid var(--neon-dim);
+    color:var(--text);
+    font-size:16px;
+    padding:12px 14px;
+    border-radius:10px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  select:focus, input:focus{
+    border-color:var(--neon);
+    box-shadow:0 0 0 3px rgba(0,217,255,0.15), 0 0 12px rgba(0,217,255,0.3);
+  }
+  .info-box{
+    background:#08111c;
+    border:1px solid var(--neon-dim);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:14px;
+    line-height:1.8;
+    color:var(--text);
+  }
+  .info-box .val{
+    color:var(--neon);
+    font-weight:700;
+    text-shadow:0 0 6px rgba(0,217,255,0.6);
+  }
+  .info-box .formula{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:8px;
+  }
+  .btn-row{
+    margin-top:auto;
+    display:flex;
+    gap:10px;
+    padding-top:18px;
+  }
+  button{
+    flex:1;
+    padding:13px 10px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:1px;
+    cursor:pointer;
+    border:1px solid var(--neon-dim);
+    background:transparent;
+    color:var(--text-dim);
+    transition:all .2s;
+  }
+  button.primary{
+    background:linear-gradient(180deg, rgba(0,217,255,0.18), rgba(0,217,255,0.05));
+    color:var(--neon);
+    border-color:var(--neon);
+    box-shadow:0 0 14px rgba(0,217,255,0.25);
+  }
+  button.primary:hover{
+    box-shadow:0 0 22px rgba(0,217,255,0.45);
+  }
+  button:disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  button.ghost:hover{
+    border-color:var(--text-dim);
+    color:var(--text);
+  }
+  .error{
+    color:var(--neon-pink);
+    font-size:12px;
+    margin-top:6px;
+    text-shadow:0 0 6px rgba(255,46,136,0.5);
+  }
+  .summary-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  .summary-table td{
+    padding:6px 4px;
+    border-bottom:1px solid #122033;
+  }
+  .summary-table td:first-child{
+    color:var(--text-dim);
+    width:46%;
+  }
+  .summary-table td:last-child{
+    color:var(--neon);
+    font-weight:600;
+    text-align:right;
+  }
+  textarea{
+    width:100%;
+    min-height:200px;
+    background:#020407;
+    border:1px solid var(--neon-dim);
+    color:var(--neon);
+    font-family: "Yu Mincho", "游明朝", "Hiragino Mincho ProN", "HGS明朝E", serif;
+    font-size:12.5px;
+    line-height:1.6;
+    padding:14px;
+    border-radius:10px;
+    resize:vertical;
+    text-shadow:0 0 4px rgba(0,217,255,0.4);
+  }
+  .copied-toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--card);
+    border:1px solid var(--neon);
+    color:var(--neon);
+    padding:10px 20px;
+    border-radius:30px;
+    font-size:13px;
+    box-shadow:0 0 20px rgba(0,217,255,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s;
+  }
+  .copied-toast.show{ opacity:1; }
+  .dot-steps{
+    display:flex;
+    gap:5px;
+    justify-content:center;
+    margin-top:14px;
+  }
+  .dot-steps span{
+    width:6px;height:6px;border-radius:50%;
+    background:#10202d;
+  }
+  .dot-steps span.active{
+    background:var(--neon);
+    box-shadow:0 0 6px var(--neon);
+  }
+  .dot-steps span.done{
+    background:var(--neon-dim);
+  }
+  .reco-label{
+    font-size:12px;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;
+  }
+  .reco-grid{
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .geta-card{
+    display:flex;flex-direction:column;align-items:flex-start;
+    background:#0a121e;border:1px solid var(--neon-dim);border-radius:10px;
+    padding:10px 14px;cursor:pointer;text-align:left;color:var(--text);
+    transition:all .15s;width:100%;font-family:inherit;
+  }
+  .geta-card:hover{ border-color:var(--neon); }
+  .geta-card.selected{
+    border-color:var(--neon);
+    box-shadow:0 0 14px rgba(0,217,255,0.35);
+    background:linear-gradient(180deg, rgba(0,217,255,0.12), rgba(0,217,255,0.02));
+  }
+  .geta-card .geta-no{
+    font-size:15px;font-weight:700;color:var(--neon);
+    text-shadow:0 0 6px rgba(0,217,255,0.5);
+  }
+  .geta-card .geta-spec{
+    font-size:12px;color:var(--text-dim);margin-top:2px;
+  }
+  .geta-card .diff{
+    font-size:11px;color:var(--neon-pink);margin-top:4px;
+    text-shadow:0 0 4px rgba(255,46,136,0.5);
+  }
+
+  /* ---- 塩ビ高さ不足 警告モーダル ---- */
+  .warn-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.82);
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;padding:24px;
+    opacity:0;pointer-events:none;
+    transition:opacity .22s ease;
+  }
+  .warn-overlay.show{opacity:1;pointer-events:all;}
+  .warn-modal{
+    background:linear-gradient(160deg,#100818 0%,#08050f 100%);
+    border:1px solid var(--neon-pink);
+    border-radius:20px;
+    padding:32px 28px 26px;
+    max-width:440px;width:100%;
+    box-shadow:
+      0 0 0 1px rgba(255,46,136,0.08),
+      0 0 50px rgba(255,46,136,0.22),
+      inset 0 0 40px rgba(255,46,136,0.04);
+    animation:warnPop .22s ease;
+  }
+  @keyframes warnPop{
+    from{transform:scale(.9) translateY(8px);opacity:0;}
+    to  {transform:scale(1)  translateY(0);  opacity:1;}
+  }
+  .warn-icon{
+    font-size:38px;text-align:center;margin-bottom:14px;
+    filter:drop-shadow(0 0 12px rgba(255,46,136,0.9));
+  }
+  .warn-title{
+    font-size:15px;font-weight:700;letter-spacing:1px;
+    color:var(--neon-pink);
+    text-shadow:0 0 10px rgba(255,46,136,0.6);
+    text-align:center;margin-bottom:10px;
+  }
+  .warn-body{
+    font-size:13px;color:var(--text);line-height:1.85;
+    text-align:center;margin-bottom:16px;
+  }
+  .warn-vals{
+    background:rgba(255,46,136,0.07);
+    border:1px solid rgba(255,46,136,0.18);
+    border-radius:10px;padding:12px 16px;margin-bottom:20px;
+    font-size:13px;line-height:2;
+  }
+  .warn-vals .wlabel{color:var(--text-dim);}
+  .warn-vals .v-bad{
+    color:var(--neon-pink);font-weight:700;
+    text-shadow:0 0 6px rgba(255,46,136,0.5);
+  }
+  .warn-vals .v-good{
+    color:var(--neon);font-weight:700;
+    text-shadow:0 0 6px rgba(0,217,255,0.5);
+  }
+  .warn-btn-row{display:flex;gap:10px;}
+  .warn-btn-row button{
+    flex:1;padding:13px 10px;border-radius:10px;
+    font-size:13px;font-weight:600;letter-spacing:.5px;cursor:pointer;
+  }
+  .btn-warn-back{
+    background:linear-gradient(180deg,rgba(255,46,136,0.2),rgba(255,46,136,0.06));
+    border:1px solid var(--neon-pink);color:var(--neon-pink);
+    box-shadow:0 0 14px rgba(255,46,136,0.2);transition:box-shadow .2s;
+  }
+  .btn-warn-back:hover{box-shadow:0 0 26px rgba(255,46,136,0.45);}
+  .btn-warn-proceed{
+    background:transparent;border:1px solid #1c2d3f;
+    color:var(--text-dim);transition:border-color .2s,color .2s;
+  }
+  .btn-warn-proceed:hover{border-color:var(--text-dim);color:var(--text);}
+
+  /* ---- テンキーショートカットヒント ---- */
+  .shortcut-hint{
+    display:flex;flex-wrap:wrap;gap:5px 14px;
+    margin:6px 0 4px;
+  }
+  .sc-item{font-size:12px;color:var(--text-dim);}
+  .sc-key{
+    display:inline-block;
+    background:rgba(0,217,255,0.08);
+    border:1px solid var(--neon-dim);
+    border-radius:4px;padding:0 6px;
+    color:var(--neon);font-size:11px;
+    margin-right:4px;font-family:serif;
+    text-shadow:0 0 4px rgba(0,217,255,0.4);
+  }
+
+  /* ===== ホーム画面 ===== */
+  #homeScreen{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:40px 24px;
+    gap:0;
+  }
+  .home-icon{
+    width:288px;
+    height:auto;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    border-radius:56px;
+    margin-bottom:22px;
+    filter:drop-shadow(0 0 32px rgba(0,217,255,0.45));
+  }
+  .home-title{
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:3px;
+    color:var(--neon);
+    text-shadow:0 0 8px var(--neon), 0 0 28px rgba(0,217,255,0.5);
+    margin:0 0 44px;
+    text-align:center;
+  }
+  .home-btn-start{
+    flex:none;
+    width:100%;
+    max-width:360px;
+    padding:18px 24px;
+    border-radius:14px;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:2px;
+    background:linear-gradient(180deg, #00b0d8 0%, #006d8a 100%);
+    color:#ffffff;
+    border:1px solid rgba(0,217,255,0.6);
+    box-shadow:0 0 28px rgba(0,217,255,0.5), 0 4px 20px rgba(0,0,0,0.6);
+    cursor:pointer;
+    transition:box-shadow .2s, transform .15s;
+    margin-bottom:14px;
+    font-family:inherit;
+  }
+  .home-btn-start:hover{
+    box-shadow:0 0 44px rgba(0,217,255,0.75), 0 4px 24px rgba(0,0,0,0.6);
+    transform:translateY(-1px);
+  }
+  .home-btn-start:active{
+    transform:translateY(0);
+    box-shadow:0 0 20px rgba(0,217,255,0.45);
+  }
+  .home-btn-history{
+    flex:none;
+    width:100%;
+    max-width:360px;
+    padding:11px 24px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:1px;
+    background:rgba(255,255,255,0.02);
+    color:#3a5669;
+    border:1px solid #182d3c;
+    cursor:pointer;
+    transition:border-color .2s, color .2s;
+    font-family:inherit;
+  }
+  .home-btn-history:hover{
+    border-color:#2a4558;
+    color:#5a7888;
+  }
+
+  /* ===== イースターエッグ ドロワー ===== */
+  .egg-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.72);
+    display:flex;align-items:flex-end;
+    z-index:10000;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .egg-overlay.show{opacity:1;pointer-events:all;}
+  .egg-drawer{
+    width:100%;
+    max-height:85vh;
+    background:linear-gradient(160deg,#080e1a 0%,#04080f 100%);
+    border-top:1px solid rgba(0,217,255,0.35);
+    border-radius:22px 22px 0 0;
+    padding:12px 24px 32px;
+    overflow-y:auto;
+    box-shadow:0 -8px 40px rgba(0,217,255,0.12), 0 -2px 0 rgba(0,217,255,0.08);
+    transform:translateY(100%);
+    transition:transform .35s cubic-bezier(.22,.68,0,1.2);
+  }
+  .egg-overlay.show .egg-drawer{transform:translateY(0);}
+  .egg-handle{
+    width:40px;height:4px;
+    background:rgba(0,217,255,0.45);
+    border-radius:2px;
+    margin:0 auto 20px;
+  }
+  .egg-drawer-title{
+    font-size:15px;font-weight:700;
+    letter-spacing:2px;
+    color:var(--neon);
+    text-shadow:0 0 8px rgba(0,217,255,0.5);
+    text-align:center;
+    margin-bottom:20px;
+  }
+  .egg-section{
+    padding:14px 0;
+    border-bottom:1px solid #0d1c2d;
+    text-align:center;
+  }
+  .egg-section:last-of-type{border-bottom:none;}
+  .egg-label{
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--neon);
+    text-shadow:0 0 5px rgba(0,217,255,0.4);
+    margin-bottom:7px;
+    display:block;
+    text-align:center;
+  }
+  .egg-text{
+    font-size:13px;
+    color:var(--text);
+    line-height:2;
+    text-align:center;
+    margin:0;
+  }
+  .egg-cost-table{
+    width:auto;
+    max-width:280px;
+    border-collapse:collapse;
+    font-size:12.5px;
+    margin:8px auto 0;
+  }
+  .egg-cost-table td{
+    padding:6px 8px;
+    border:1px solid #0e1e2d;
+    color:var(--text);
+    line-height:1.6;
+  }
+  .egg-cost-table td:last-child{
+    text-align:right;
+    color:var(--neon);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .egg-cost-table tr.total td{
+    border-top:1px solid rgba(0,217,255,0.3);
+    color:var(--neon);
+    font-weight:700;
+  }
+  .egg-footer{
+    text-align:center;
+    font-size:12px;
+    color:rgba(0,217,255,0.5);
+    margin-top:20px;
+    letter-spacing:1px;
+  }
+  .egg-close{
+    flex:none;
+    display:block;
+    width:100%;
+    margin-top:18px;
+    padding:12px;
+    border-radius:10px;
+    background:transparent;
+    border:1px solid #1a2e3f;
+    color:#3a5669;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:border-color .2s,color .2s;
+    font-family:inherit;
+  }
+  .egg-close:hover{border-color:#2a4558;color:#5a7888;}
+</style>
+</head>
+<body>
+
+<!-- ホーム画面 -->
+<div id="homeScreen">
+  <img src="app-icon.png" class="home-icon" alt="NCヘッダー作成アイコン">
+  <h1 class="home-title">NCヘッダージェネレーター</h1>
+  <button class="home-btn-start" id="btnStart">開始する</button>
+  <button class="home-btn-history" id="btnHistory">生成履歴</button>
+</div>
+
+<div class="app" id="appMain" style="display:none">
+  <div class="lang-bar">
+    <select id="langSelect"></select>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progressText">質問 1 / 13</span>
+      <span id="progressPct">8%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:8%"></div></div>
+  </div>
+
+  <div class="card" id="card"></div>
+</div>
+
+<div class="copied-toast" id="toast">コピーしました</div>
+
+<!-- 塩ビ高さ不足 警告モーダル -->
+<div class="warn-overlay" id="warnOverlay">
+  <div class="warn-modal">
+    <div class="warn-icon">⚠</div>
+    <div class="warn-title" id="warnTitle"></div>
+    <div class="warn-body"  id="warnBody"></div>
+    <div class="warn-vals"  id="warnVals"></div>
+    <div class="warn-btn-row">
+      <button class="btn-warn-back"    id="warnBtnBack"></button>
+      <button class="btn-warn-proceed" id="warnBtnProceed"></button>
+    </div>
+  </div>
+</div>
+
+<!-- イースターエッグ：このアプリについて -->
+<div class="egg-overlay" id="eggOverlay">
+  <div class="egg-drawer" id="eggDrawer">
+    <div class="egg-handle"></div>
+    <div class="egg-drawer-title">このアプリについて</div>
+
+    <div class="egg-section">
+      <span class="egg-label">― 生まれたきっかけ ―</span>
+      <p class="egg-text">Bエリアのプログラム作成業務をもっとシンプルにしたい。<br>そんな想いからこのアプリが生まれました。</p>
+    </div>
+
+    <div class="egg-section">
+      <span class="egg-label">― 開発者の想い ―</span>
+      <p class="egg-text">スタッフ全員の作業が少しでも楽になれば、それだけです。</p>
+    </div>
+
+    <div class="egg-section">
+      <span class="egg-label">― 開発について ―</span>
+      <p class="egg-text">業務時間外にプライベートな時間とコストを使い、<br>独学で開発しました。</p>
+      <table class="egg-cost-table">
+        <tr><td>開発環境整備費</td><td>10,000円</td></tr>
+        <tr><td>開発人件費（2,000円/h × 5h）</td><td>10,000円</td></tr>
+        <tr class="total"><td>合計</td><td>20,000円</td></tr>
+      </table>
+    </div>
+
+    <div class="egg-section">
+      <span class="egg-label">― 権利について ―</span>
+      <p class="egg-text">著作権・知的財産権は現在、山田個人に帰属しています。<br>会社備品や業務時間中に生成されたコードは会社の権利ですが、<br>本アプリ自体は山田個人の所有物です。<br><br>正当な評価・費用援助をいただけた場合は、<br>全権利を会社へ帰属させる用意があります。</p>
+    </div>
+
+    <div class="egg-section">
+      <span class="egg-label">― 保守体制について ―</span>
+      <p class="egg-text">山田在籍中は継続して保守します。<br>特定の個人に依存しない設計のため、<br>知識のある方なら引き継ぎ可能な構成です。</p>
+    </div>
+
+    <p class="egg-footer">ご質問・ご相談は山田まで</p>
+    <button class="egg-close" id="eggClose">閉じる</button>
+  </div>
+</div>
+
+<script src="logic.js"></script>
+<script>
+/* =========================================================
+   index.html 内 アプリ制御スクリプト
+   ---------------------------------------------------------
+   ★ 計算ロジックや単価マスターは logic.js 側を編集してください。
+   ★ このファイルは「画面の出し方」だけを担当します。
+   ★ 多言語対応：I18N オブジェクトに言語キーを追加すれば
+     画面の文言を増やせます。
+   ========================================================= */
+
+/* ---------- 多言語辞書 ---------- */
+const I18N = {
+  ja: {
+    langName: "日本語",
+    step: (n, total) => `質問 ${n} / ${total}`,
+    next: "次へ",
+    back: "戻る",
+    finish: "完了",
+    reset: "最初からやり直す",
+    copy: "テキストをコピー",
+    copied: "コピーしました",
+    requiredError: "この項目は必須です",
+    numberError: "数値を入力してください",
+    torukuRangeError: "トルクは 1 〜 30N の範囲で入力してください",
+    kakouLengthError: (zenchou) => `加工長さは全長（${zenchou}mm）以下の値にしてください`,
+    chushinRangeError: (kijun) => `基準高さ（${kijun}mm）より小さい値を入力してください`,
+    zenchouRangeError: (min, max) => `全長は ${min}〜${max}mm の範囲で入力してください`,
+    kakouRangeError: (min, max) => `加工長さは ${min}〜${max}mm の範囲で入力してください`,
+    sakuseishaMaxError: "作成者名は10文字以内で入力してください",
+    sakuseishaFormatError: "半角英数字・ピリオド・スラッシュのみ使用できます（例：T.SIKATA）",
+    q8_kijun_label: "チャック基準高さ（通常は 50mm）",
+    q8_kijun_50: "50mm（通常）",
+    q8_kijun_70: "70mm（特殊）",
+
+    q1_title: "① 加工する機械No.を選んでください",
+    q1_hint: "対象のCNC機械番号を選択します。",
+
+    q2_title: "② 加工後の全長を入力してください",
+    q2_hint: "ゲタ頂点から加工原点までの距離（mm）",
+
+    q3_title: "③ 加工長さを入力してください",
+    q3_hint: "ネジ・チューブなどの加工長さ（mm）",
+
+    q4_title: "④ 塩ビ高さの目安を確認してください",
+    q4_hint: "ツメ長さ － 鉄ゲタ高さ － (全長 － 加工長さ) ＋ 突き出し量(2mm)\nこの近辺の高さを持つ塩ビゲタを次のステップで選びます。",
+    q4_label: "目安となる塩ビ高さ",
+    q4_unavailable: "選択した機械のツメ長さ・鉄ゲタ高さが未登録のため、目安は計算できません。",
+
+    q5_title: "⑤ 塩ビゲタNo.を選んでください",
+    q5_hint: "④の目安に近い高さの塩ビゲタを選びます。",
+    q5_recommended: "おすすめ（目安に近い順）",
+    q5_all_toggle: "すべての塩ビゲタから選ぶ",
+    q5_height: "高さ",
+    q5_width: "幅",
+    q5_no_width: "幅データ未登録",
+    q5_exact: "ぴったり",
+    q5_diff: "目安との差",
+
+    q6_title: "⑤ 鉄ゲタNo.を選んでください",
+    q6_hint: "機械選択時の初期値が入っていますが、変更できます。",
+    q6_takasa: "高さ",
+    q6_haba: "幅",
+    q6_ana: "穴",
+
+    q7_title: "⑦⑧ オフセット値を確認してください",
+    q7_hint: "機械オフセット値と塩ビ高さ・全長・ゲタ高さから自動計算されます。",
+    q7_kishu: "機種",
+    q7_result: "Zオフセット値",
+    q7_unavailable: "必要な数値が未入力のため、計算できません。前の質問を確認してください。",
+
+    q8_title: "⑨ 下アテから中心までの距離を入力してください",
+    q8_hint: "（mm）",
+
+    q9_title: "⑩⑪ アテNo.を選んでください",
+    q9_hint: "アテ高さ ＝ 50 － 下アテから中心までの距離",
+    q9_ate_takasa_label: "計算されたアテ高さ",
+    q9_result_takasa: "アテの高さ",
+    q9_result_phi: "アテのΦ",
+    q9_all_toggle: "すべてのアテから選ぶ",
+    q9_no_reco: "目安との差が3mm以内のアテが見つかりませんでした。↓の全件リストから選んでください。",
+
+    q10_title: "⑫ 締め付けトルクを入力してください（N）",
+    q10_hint: "基本：7N　／　7/8以上で変形しやすい製品は4〜5N",
+
+    q11_title: "⑭ 横ゲタの有無を選んでください",
+
+    q12_title: "⑬ プログラム作成者名を入力してください",
+    q12_hint: "ローマ字推奨（例：T.SIKATA）",
+
+    q13_title: "確認・出力",
+    q13_hint: "内容を確認し、テキストをコピーしてプログラムに貼り付けてください。",
+    offsetNullWarning: "⚠ Zオフセット値が計算できていません。塩ビゲタ・鉄ゲタが正しく選択されているか「戻る」で確認してください。",
+    summary_kikai: "機械No.",
+    summary_zenchou: "加工後の全長",
+    summary_kakou: "加工長さ",
+    summary_enbi: "塩ビゲタNo.",
+    summary_tetsugeta: "鉄ゲタNo.",
+    summary_offset: "Zオフセット値",
+    summary_chushin: "下アテ中心距離",
+    summary_ate: "アテNo.",
+    summary_toruku: "締め付けトルク",
+    summary_yokogeta: "横ゲタ",
+    summary_sakuseisha: "作成者",
+
+    yokogeta_nashi: "なし",
+    yokogeta_ari: "あり",
+
+    enbiWarnTitle: "塩ビ高さが目安を下回っています",
+    enbiWarnBody: "選んだ塩ビゲタの高さが、計算した目安より低い数値です。\nこのまま進むと工具干渉が発生する可能性があります。",
+    enbiWarnGuide: "目安の高さ",
+    enbiWarnSelected: "選択した高さ",
+    enbiWarnBack: "選び直す",
+    enbiWarnProceed: "このまま進む",
+  },
+
+  vi: {
+    langName: "Tiếng Việt",
+    step: (n, total) => `Câu hỏi ${n} / ${total}`,
+    next: "Tiếp theo",
+    back: "Quay lại",
+    finish: "Hoàn thành",
+    reset: "Làm lại từ đầu",
+    copy: "Sao chép văn bản",
+    copied: "Đã sao chép",
+    requiredError: "Mục này là bắt buộc",
+    numberError: "Vui lòng nhập số",
+    torukuRangeError: "Vui lòng nhập lực siết từ 1 đến 30N",
+    kakouLengthError: (zenchou) => `Chiều dài gia công phải nhỏ hơn hoặc bằng tổng chiều dài (${zenchou}mm)`,
+    chushinRangeError: (kijun) => `Vui lòng nhập giá trị nhỏ hơn chiều cao chuẩn (${kijun}mm)`,
+    zenchouRangeError: (min, max) => `Vui lòng nhập tổng chiều dài từ ${min} đến ${max}mm`,
+    kakouRangeError: (min, max) => `Vui lòng nhập chiều dài gia công từ ${min} đến ${max}mm`,
+    sakuseishaMaxError: "Tên người tạo phải trong vòng 10 ký tự",
+    sakuseishaFormatError: "Chỉ được dùng chữ cái, số, dấu chấm, dấu gạch chéo (ví dụ: T.SIKATA)",
+    q8_kijun_label: "Chiều cao chuẩn của chuck (thường là 50mm)",
+    q8_kijun_50: "50mm (thông thường)",
+    q8_kijun_70: "70mm (đặc biệt)",
+
+    q1_title: "① Chọn số máy gia công",
+    q1_hint: "Chọn số máy CNC cần sử dụng.",
+
+    q2_title: "② Nhập tổng chiều dài sau gia công",
+    q2_hint: "Khoảng cách từ đỉnh đế (ゲタ) đến điểm gốc gia công (mm)",
+
+    q3_title: "③ Nhập chiều dài gia công",
+    q3_hint: "Chiều dài gia công của ốc vít, ống, v.v. (mm)",
+
+    q4_title: "④ Kiểm tra chiều cao ước tính của đế nhựa PVC (塩ビ)",
+    q4_hint: "Chiều dài móc kẹp − Chiều cao đế sắt − (Tổng chiều dài − Chiều dài gia công) + Lượng nhô ra (2mm)\nỞ bước tiếp theo, bạn sẽ chọn đế nhựa PVC có chiều cao gần với giá trị này.",
+    q4_label: "Chiều cao đế nhựa PVC ước tính",
+    q4_unavailable: "Chưa đăng ký chiều dài móc kẹp / chiều cao đế sắt của máy đã chọn nên không thể tính giá trị ước tính.",
+
+    q5_title: "⑤ Chọn số đế nhựa PVC (塩ビゲタNo.)",
+    q5_hint: "Chọn đế nhựa PVC có chiều cao gần với giá trị ước tính ở bước ④.",
+    q5_recommended: "Đề xuất (theo thứ tự gần với giá trị ước tính)",
+    q5_all_toggle: "Chọn từ tất cả đế nhựa PVC",
+    q5_height: "Chiều cao",
+    q5_width: "Chiều rộng",
+    q5_no_width: "Chưa có dữ liệu chiều rộng",
+    q5_exact: "Khớp chính xác",
+    q5_diff: "Chênh lệch so với giá trị ước tính",
+
+    q6_title: "⑤ Chọn số đế sắt (鉄ゲタNo.)",
+    q6_hint: "Giá trị mặc định được điền khi chọn máy, bạn có thể thay đổi.",
+    q6_takasa: "Chiều cao",
+    q6_haba: "Chiều rộng",
+    q6_ana: "Lỗ",
+
+    q7_title: "⑦⑧ Kiểm tra giá trị offset",
+    q7_hint: "Được tự động tính từ giá trị offset của máy, chiều cao đế nhựa PVC, tổng chiều dài và chiều cao đế.",
+    q7_kishu: "Loại máy",
+    q7_result: "Giá trị offset Z",
+    q7_unavailable: "Không thể tính vì thiếu giá trị cần thiết. Vui lòng kiểm tra lại các câu hỏi trước.",
+
+    q8_title: "⑨ Nhập khoảng cách từ tấm đệm dưới đến tâm",
+    q8_hint: "(mm)",
+
+    q9_title: "⑩⑪ Chọn số tấm đệm (アテNo.)",
+    q9_hint: "Chiều cao tấm đệm = 50 − Khoảng cách từ tấm đệm dưới đến tâm",
+    q9_ate_takasa_label: "Chiều cao tấm đệm đã tính",
+    q9_result_takasa: "Chiều cao tấm đệm",
+    q9_result_phi: "Đường kính Φ tấm đệm",
+    q9_all_toggle: "Chọn từ tất cả tấm đệm",
+    q9_no_reco: "Không tìm thấy tấm đệm nào trong phạm vi ±3mm. Vui lòng chọn từ danh sách đầy đủ bên dưới.",
+
+    q10_title: "⑫ Nhập lực siết (N)",
+    q10_hint: "Cơ bản: 7N　／　Sản phẩm dễ biến dạng từ 7/8 trở lên: 4〜5N",
+
+    q11_title: "⑭ Chọn có/không có đế ngang (横ゲタ)",
+
+    q12_title: "⑬ Nhập tên người tạo chương trình",
+    q12_hint: "Khuyến nghị dùng chữ La-tinh (ví dụ: T.SIKATA)",
+
+    q13_title: "Xác nhận và xuất kết quả",
+    q13_hint: "Vui lòng kiểm tra nội dung, sao chép văn bản và dán vào chương trình.",
+    offsetNullWarning: "⚠ Không thể tính giá trị offset Z. Vui lòng nhấn 'Quay lại' và kiểm tra lại đế nhựa PVC và đế sắt.",
+    summary_kikai: "Số máy",
+    summary_zenchou: "Tổng chiều dài sau gia công",
+    summary_kakou: "Chiều dài gia công",
+    summary_enbi: "Số đế nhựa PVC",
+    summary_tetsugeta: "Số đế sắt",
+    summary_offset: "Giá trị offset Z",
+    summary_chushin: "Khoảng cách tâm tấm đệm dưới",
+    summary_ate: "Số tấm đệm",
+    summary_toruku: "Lực siết",
+    summary_yokogeta: "Đế ngang",
+    summary_sakuseisha: "Người tạo",
+
+    yokogeta_nashi: "Không có",
+    yokogeta_ari: "Có",
+
+    enbiWarnTitle: "Chiều cao đế nhựa PVC thấp hơn giá trị ước tính",
+    enbiWarnBody: "Chiều cao đế nhựa PVC đã chọn thấp hơn giá trị ước tính đã tính toán.\nNếu tiếp tục, có thể xảy ra va chạm dao cắt.",
+    enbiWarnGuide: "Chiều cao ước tính",
+    enbiWarnSelected: "Chiều cao đã chọn",
+    enbiWarnBack: "Chọn lại",
+    enbiWarnProceed: "Tiếp tục",
+  },
+};
+
+const LANGS = ["ja", "vi"];
+let currentLang = "ja";
+function t(key, ...args) {
+  const dict = I18N[currentLang] || I18N.ja;
+  const val = dict[key];
+  return typeof val === "function" ? val(...args) : (val ?? key);
+}
+
+/* ---------- 言語セレクタの初期化 ---------- */
+const langSelect = document.getElementById("langSelect");
+LANGS.forEach(code => {
+  const opt = document.createElement("option");
+  opt.value = code;
+  opt.textContent = I18N[code].langName;
+  langSelect.appendChild(opt);
+});
+langSelect.value = currentLang;
+langSelect.addEventListener("change", () => {
+  currentLang = langSelect.value;
+  render();
+});
+
+/* ---------- 状態 ---------- */
+const state = {
+  kikaiNo: "",
+  zenchou: "",
+  kakouNagasa: "",
+  enbiGetaNo: "",
+  tetsugetaNo: "",
+  kijunTakasa: "50",
+  chushinKyori: "",
+  ateNo: "",
+  toruku: "",
+  yokogeta: "なし",
+  sakuseisha: "",
+};
+
+let stepIndex = 0;
+
+/* ---------- 派生値（毎回再計算） ---------- */
+function derive() {
+  const machine = Logic.kikaiMaster[state.kikaiNo] || null;
+  const enbiGuide = machine
+    ? Logic.calcEnbiGuide(machine.tumeNagasa, machine.tetsugetaTakasa, Number(state.zenchou), Number(state.kakouNagasa))
+    : null;
+  const enbiInfo = Logic.enbiGetaMaster[state.enbiGetaNo];
+  const enbiTakasa = enbiInfo ? enbiInfo.height : undefined;
+  const tetsugeta = Logic.tetsugetaMaster[state.tetsugetaNo];
+  const offsetValue = machine
+    ? Logic.calcOffset(machine.kishu, machine.offset, enbiTakasa, Number(state.zenchou), tetsugeta?.takasa)
+    : null;
+  const ateTakasaCalc = Logic.calcAteTakasa(Number(state.chushinKyori), Number(state.kijunTakasa));
+  const ate = Logic.ateMaster[state.ateNo];
+  const ateDiff = (ate && ateTakasaCalc !== null && ateTakasaCalc !== undefined && !isNaN(ateTakasaCalc))
+    ? Number((ate.takasa - ateTakasaCalc).toFixed(4))
+    : null;
+
+  return { machine, enbiGuide, enbiInfo, enbiTakasa, tetsugeta, offsetValue, ateTakasaCalc, ate, ateDiff };
+}
+
+/* ---------- ドキュメント全体の Enter キーハンドラ（画面遷移ごとに差し替え） ---------- */
+let _docKeydownHandler = null;
+function setDocKeydown(fn) {
+  if (_docKeydownHandler) document.removeEventListener("keydown", _docKeydownHandler);
+  _docKeydownHandler = fn || null;
+  if (fn) document.addEventListener("keydown", fn);
+}
+
+/* ---------- ステップ定義 ---------- */
+const steps = [
+  { id: "kikai" },
+  { id: "zenchou" },
+  { id: "kakou" },
+  { id: "enbiGuide" },
+  { id: "enbiNo" },
+  { id: "tetsugetaNo" },
+  { id: "offset" },
+  { id: "chushin" },
+  { id: "ateNo" },
+  { id: "toruku" },
+  { id: "yokogeta" },
+  { id: "sakuseisha" },
+  { id: "summary" },
+];
+const TOTAL = steps.length;
+
+/* ---------- 共通ヘルパー ---------- */
+function makeOptions(selectEl, keys, placeholder) {
+  selectEl.innerHTML = "";
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = placeholder;
+  ph.disabled = true;
+  selectEl.appendChild(ph);
+  keys.forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = k;
+    selectEl.appendChild(o);
+  });
+}
+
+function card() { return document.getElementById("card"); }
+
+function buildHeader(qTitle, qHint) {
+  return `
+    <div class="q-num">${t("step", stepIndex + 1, TOTAL)}</div>
+    <h2 class="q-title">${qTitle}</h2>
+    <div class="q-hint">${qHint ? qHint.replace(/\n/g, "<br>") : ""}</div>
+  `;
+}
+
+function buildBtnRow({ showBack = true, nextLabel = t("next"), nextDisabled = false } = {}) {
+  return `
+    <div class="btn-row">
+      ${showBack ? `<button class="ghost" id="btnBack">${t("back")}</button>` : ""}
+      <button class="primary" id="btnNext" ${nextDisabled ? "disabled" : ""}>${nextLabel}</button>
+    </div>
+  `;
+}
+
+function attachNav({ onNext, onBack }) {
+  const nextBtn = document.getElementById("btnNext");
+  const backBtn = document.getElementById("btnBack");
+  if (nextBtn) nextBtn.addEventListener("click", onNext);
+  if (backBtn) backBtn.addEventListener("click", onBack || (() => { stepIndex--; render(); }));
+}
+
+function goNext() {
+  if (stepIndex < TOTAL - 1) { stepIndex++; render(); }
+}
+function goBack() {
+  if (stepIndex > 0) { stepIndex--; render(); }
+}
+
+/* ---------- 各ステップのレンダリング ---------- */
+function renderStep() {
+  setDocKeydown(null);
+  const d = derive();
+  const id = steps[stepIndex].id;
+  const showBack = stepIndex > 0;
+  let html = "";
+
+  switch (id) {
+
+    case "kikai": {
+      // 未登録機械が選択済みの場合（戻り操作等）はリセット
+      if (state.kikaiNo && !Logic.isKikaiComplete(state.kikaiNo)) {
+        state.kikaiNo = "";
+      }
+      const enabledKikai = Object.keys(Logic.kikaiMaster).filter(k => Logic.isKikaiComplete(k));
+      html = buildHeader(t("q1_title"), t("q1_hint"));
+      html += `<div class="field"><select id="input"></select></div>`;
+      html += `<div id="errBox"></div>`;
+      if (enabledKikai.length > 0) {
+        html += `<div class="shortcut-hint">` +
+          enabledKikai.slice(0, 10).map((k, i) => {
+            const numKey = i === 9 ? "0" : String(i + 1);
+            return `<span class="sc-item"><span class="sc-key">${numKey}</span>${k}</span>`;
+          }).join("") +
+          `</div>`;
+      }
+      html += buildBtnRow({ showBack, nextDisabled: !state.kikaiNo });
+      card().innerHTML = html;
+      const sel = document.getElementById("input");
+      makeOptions(sel, Object.keys(Logic.kikaiMaster), "選択してください");
+      // isKikaiComplete → データが揃っていない機械をグレーアウト（選択不可）
+      Array.from(sel.options).forEach(opt => {
+        if (!opt.value) return;
+        if (!Logic.isKikaiComplete(opt.value)) {
+          opt.disabled = true;
+          opt.textContent = `${opt.value}（データ未登録 logic.js nullを数値変更）`;
+        }
+      });
+      sel.value = state.kikaiNo;
+      sel.focus();
+      sel.addEventListener("change", () => {
+        state.kikaiNo = sel.value;
+        const m = Logic.kikaiMaster[sel.value];
+        state.enbiGetaNo = "";
+        state.tetsugetaNo = (m && m.tetsugetaNo) ? m.tetsugetaNo : "";
+        document.getElementById("btnNext").disabled = !state.kikaiNo;
+      });
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => {
+        if (e.key === "Enter" && state.kikaiNo) { goNext(); return; }
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < enabledKikai.length) {
+            e.preventDefault();
+            const k = enabledKikai[idx];
+            state.kikaiNo = k;
+            const m = Logic.kikaiMaster[k];
+            state.enbiGetaNo = "";
+            state.tetsugetaNo = (m && m.tetsugetaNo) ? m.tetsugetaNo : "";
+            sel.value = k;
+            document.getElementById("btnNext").disabled = false;
+          }
+        }
+      });
+      break;
+    }
+
+    case "zenchou": {
+      html = buildHeader(t("q2_title"), t("q2_hint"));
+      html += `<div class="field"><input type="number" id="input" step="1" placeholder="例: 69"></div>`;
+      html += `<div id="errBox" class="error" style="display:none"></div>`;
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      const inp = document.getElementById("input");
+      inp.value = state.zenchou;
+      inp.focus();
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNextNumber(); });
+      attachNav({ onNext: tryNextNumber, onBack: goBack });
+      function tryNextNumber() {
+        const v = document.getElementById("input").value;
+        if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
+        const n = Number(v);
+        if (n < 1 || n > 200) { showErr(t("zenchouRangeError", 1, 200)); return; }
+        state.zenchou = v;
+        goNext();
+      }
+      break;
+    }
+
+    case "kakou": {
+      html = buildHeader(t("q3_title"), t("q3_hint"));
+      html += `<div class="field"><input type="number" id="input" step="1" placeholder="例: 10"></div>`;
+      html += `<div id="errBox" class="error" style="display:none"></div>`;
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      const inp = document.getElementById("input");
+      inp.value = state.kakouNagasa;
+      inp.focus();
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      attachNav({ onNext: tryNext, onBack: goBack });
+      function tryNext() {
+        const v = document.getElementById("input").value;
+        if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
+        const n = Number(v);
+        if (n < 1 || n > 50) { showErr(t("kakouRangeError", 1, 50)); return; }
+        if (n > Number(state.zenchou)) { showErr(t("kakouLengthError", state.zenchou)); return; }
+        state.kakouNagasa = v;
+        goNext();
+      }
+      break;
+    }
+
+    case "enbiGuide": {
+      html = buildHeader(t("q4_title"), t("q4_hint"));
+      if (d.enbiGuide === null) {
+        html += `<div class="info-box">${t("q4_unavailable")}</div>`;
+      } else {
+        html += `<div class="info-box">${t("q4_label")}：<span class="val">${Logic.fmt(d.enbiGuide)} mm</span></div>`;
+      }
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => { if (e.key === "Enter") goNext(); });
+      break;
+    }
+
+    case "enbiNo": {
+      const guide = d.enbiGuide;
+      const { recommended, all } = Logic.getEnbiRecommendations(guide);
+      const cardList = recommended.length ? recommended : all.slice(0, 5);
+
+      html = buildHeader(t("q5_title"), t("q5_hint"));
+      if (guide !== null) {
+        html += `<div class="info-box" style="margin-bottom:14px;">${t("q4_label")}：<span class="val">${Logic.fmt(guide)} mm</span></div>`;
+      }
+      html += `<div class="reco-label">${t("q5_recommended")}</div>`;
+      html += `<div class="reco-grid" id="recoGrid">`;
+      cardList.forEach((item, idx) => {
+        const selected = state.enbiGetaNo === item.key ? "selected" : "";
+        const widthLabel = item.width === null ? t("q5_no_width") : `${item.width} mm`;
+        let diffLabel = "";
+        if (item.diff !== null) {
+          diffLabel = `<div class="diff">${t("q5_diff")}：${item.diff === 0 ? t("q5_exact") : Logic.fmt(item.diff) + " mm"}</div>`;
+        }
+        const numKey = idx < 9 ? String(idx + 1) : (idx === 9 ? "0" : "");
+        const badge = numKey ? `<span class="sc-key" style="margin-left:auto;flex-shrink:0;">${numKey}</span>` : "";
+        html += `
+          <button type="button" class="geta-card ${selected}" data-key="${item.key}">
+            <div style="display:flex;width:100%;align-items:center;gap:6px;">
+              <div class="geta-no" style="flex:1;">${item.key}</div>${badge}
+            </div>
+            <div class="geta-spec">${t("q5_height")} ${item.height} mm　${t("q5_width")} ${widthLabel}</div>
+            ${diffLabel}
+          </button>`;
+      });
+      html += `</div>`;
+      html += `<button type="button" class="ghost" id="btnToggleAll" style="width:100%;margin-top:10px;">${t("q5_all_toggle")}</button>`;
+      html += `<div id="allListWrap" style="display:none; margin-top:10px;"><select id="allSelect"></select></div>`;
+      html += buildBtnRow({ showBack, nextDisabled: !state.enbiGetaNo });
+      card().innerHTML = html;
+
+      function selectKey(key) {
+        state.enbiGetaNo = key;
+        document.getElementById("btnNext").disabled = false;
+        document.querySelectorAll(".geta-card").forEach(b => b.classList.toggle("selected", b.dataset.key === key));
+        const allSelect = document.getElementById("allSelect");
+        if (allSelect) allSelect.value = key;
+      }
+
+      document.querySelectorAll(".geta-card").forEach(btn => {
+        btn.addEventListener("click", () => selectKey(btn.dataset.key));
+      });
+
+      const allSelect = document.getElementById("allSelect");
+      makeOptions(allSelect, all.map(i => i.key), "選択してください");
+      Array.from(allSelect.options).forEach(opt => {
+        if (!opt.value) return;
+        const item = all.find(i => i.key === opt.value);
+        const w = item.width === null ? "幅?" : `幅${item.width}`;
+        opt.textContent = `${item.key}（高さ${item.height} / ${w}）`;
+      });
+      allSelect.value = state.enbiGetaNo;
+      allSelect.addEventListener("change", () => selectKey(allSelect.value));
+
+      document.getElementById("btnToggleAll").addEventListener("click", () => {
+        const wrap = document.getElementById("allListWrap");
+        wrap.style.display = wrap.style.display === "none" ? "block" : "none";
+      });
+
+      function doEnbiNext() {
+        const enbiInfo = Logic.enbiGetaMaster[state.enbiGetaNo];
+        const selHeight = enbiInfo ? enbiInfo.height : undefined;
+        if (guide !== null && selHeight !== undefined && selHeight < guide) {
+          showWarnModal(guide, selHeight, goNext);
+        } else {
+          goNext();
+        }
+      }
+      attachNav({ onNext: doEnbiNext, onBack: goBack });
+      setDocKeydown(e => {
+        if (e.key === "Enter" && state.enbiGetaNo) { doEnbiNext(); return; }
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          if (cardList.length === 0) return;
+          const cur = cardList.findIndex(c => c.key === state.enbiGetaNo);
+          const next = e.key === "ArrowDown"
+            ? (cur === -1 ? 0 : Math.min(cur + 1, cardList.length - 1))
+            : (cur === -1 ? 0 : Math.max(cur - 1, 0));
+          selectKey(cardList[next].key);
+          return;
+        }
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < cardList.length) { e.preventDefault(); selectKey(cardList[idx].key); }
+        }
+      });
+      break;
+    }
+
+    case "tetsugetaNo": {
+      html = buildHeader(t("q6_title"), t("q6_hint"));
+      html += `<div class="field"><select id="input"></select></div>`;
+      html += `<div class="info-box" id="resultBox" style="display:none"></div>`;
+      html += buildBtnRow({ showBack, nextDisabled: !state.tetsugetaNo });
+      card().innerHTML = html;
+      const sel = document.getElementById("input");
+      makeOptions(sel, Object.keys(Logic.tetsugetaMaster), "選択してください");
+      Array.from(sel.options).forEach(opt => {
+        if (!opt.value) return;
+        const tg = Logic.tetsugetaMaster[opt.value];
+        const anaLabel = tg.ana === "なし" ? "穴なし" : `穴${tg.ana}`;
+        opt.textContent = `${opt.value}（高さ${tg.takasa} / 幅${tg.haba} / ${anaLabel}）`;
+      });
+      sel.value = state.tetsugetaNo;
+      sel.focus();
+      updateResult();
+      sel.addEventListener("change", () => {
+        state.tetsugetaNo = sel.value;
+        document.getElementById("btnNext").disabled = !state.tetsugetaNo;
+        updateResult();
+      });
+      function updateResult() {
+        const box = document.getElementById("resultBox");
+        const tg = Logic.tetsugetaMaster[sel.value];
+        if (!tg) { box.style.display = "none"; return; }
+        box.style.display = "block";
+        box.innerHTML = `${t("q6_takasa")}：<span class="val">${tg.takasa} mm</span>　
+                          ${t("q6_haba")}：<span class="val">${tg.haba} mm</span>　
+                          ${t("q6_ana")}：<span class="val">${tg.ana}</span>`;
+      }
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => { if (e.key === "Enter" && state.tetsugetaNo) goNext(); });
+      break;
+    }
+
+    case "offset": {
+      html = buildHeader(t("q7_title"), t("q7_hint"));
+      if (d.offsetValue === null || !d.machine) {
+        html += `<div class="info-box">${t("q7_unavailable")}</div>`;
+      } else {
+        html += `<div class="info-box">
+          ${t("q7_kishu")}：<span class="val">${d.machine.kishu}</span><br>
+          ${t("q7_result")}：<span class="val">${Logic.fmt(d.offsetValue)}</span>
+        </div>`;
+      }
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => { if (e.key === "Enter") goNext(); });
+      break;
+    }
+
+    case "chushin": {
+      html = buildHeader(t("q8_title"), t("q8_hint"));
+      html += `<div class="field"><input type="number" id="input" step="1" placeholder="例: 15"></div>`;
+      html += `<div class="field" style="margin-top:-4px;">
+        <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">${t("q8_kijun_label")}</label>
+        <select id="kijunSelect" style="font-size:13px;padding:8px 10px;">
+          <option value="50">${t("q8_kijun_50")}</option>
+          <option value="70">${t("q8_kijun_70")}</option>
+        </select>
+      </div>`;
+      html += `<div id="errBox" class="error" style="display:none"></div>`;
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      const inp = document.getElementById("input");
+      const kijunSel = document.getElementById("kijunSelect");
+      inp.value = state.chushinKyori;
+      inp.focus();
+      kijunSel.value = state.kijunTakasa;
+      kijunSel.addEventListener("change", () => { state.kijunTakasa = kijunSel.value; });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      attachNav({ onNext: tryNext, onBack: goBack });
+      function tryNext() {
+        const v = document.getElementById("input").value;
+        if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
+        const n = Number(v);
+        const kijun = Number(state.kijunTakasa);
+        if (n <= 0 || n >= kijun) { showErr(t("chushinRangeError", kijun)); return; }
+        state.chushinKyori = v;
+        goNext();
+      }
+      break;
+    }
+
+    case "ateNo": {
+      const ateTakasa = Logic.calcAteTakasa(Number(state.chushinKyori), Number(state.kijunTakasa));
+      const { recommended: ateReco, all: ateAll } = Logic.getAteRecommendations(ateTakasa);
+
+      html = buildHeader(t("q9_title"), t("q9_hint"));
+      html += `<div class="info-box" style="margin-bottom:14px;">${t("q9_ate_takasa_label")}：<span class="val">${Logic.fmt(ateTakasa)} mm</span></div>`;
+
+      if (ateReco.length > 0) {
+        html += `<div class="reco-label">${t("q5_recommended")}</div>`;
+        html += `<div class="reco-grid" id="recoGrid">`;
+        ateReco.forEach((item, idx) => {
+          const selected = state.ateNo === item.key ? "selected" : "";
+          const diffLabel = item.diff === 0
+            ? `<div class="diff">${t("q5_exact")}</div>`
+            : `<div class="diff">${t("q5_diff")}：${Logic.fmt(item.diff)} mm</div>`;
+          const numKey = idx < 9 ? String(idx + 1) : (idx === 9 ? "0" : "");
+          const badge = numKey ? `<span class="sc-key" style="margin-left:auto;flex-shrink:0;">${numKey}</span>` : "";
+          html += `
+            <button type="button" class="geta-card ${selected}" data-key="${item.key}">
+              <div style="display:flex;width:100%;align-items:center;gap:6px;">
+                <div class="geta-no" style="flex:1;">${item.key}</div>${badge}
+              </div>
+              <div class="geta-spec">${t("q9_result_takasa")} ${item.takasa} mm　${t("q9_result_phi")} ${item.phi}</div>
+              ${diffLabel}
+            </button>`;
+        });
+        html += `</div>`;
+      } else {
+        html += `<div class="info-box" style="margin-bottom:10px;color:var(--text-dim);font-size:13px;">${t("q9_no_reco")}</div>`;
+      }
+
+      html += `<button type="button" class="ghost" id="btnToggleAll" style="width:100%;margin-top:10px;">${t("q9_all_toggle")}</button>`;
+      html += `<div id="allListWrap" style="display:${ateReco.length === 0 ? 'block' : 'none'};margin-top:10px;"><select id="allSelect"></select></div>`;
+      html += buildBtnRow({ showBack, nextDisabled: !state.ateNo });
+      card().innerHTML = html;
+
+      function selectAteKey(key) {
+        state.ateNo = key;
+        document.getElementById("btnNext").disabled = false;
+        document.querySelectorAll(".geta-card").forEach(b => b.classList.toggle("selected", b.dataset.key === key));
+        const allSel = document.getElementById("allSelect");
+        if (allSel) allSel.value = key;
+      }
+
+      document.querySelectorAll(".geta-card").forEach(btn => {
+        btn.addEventListener("click", () => selectAteKey(btn.dataset.key));
+      });
+
+      const allSelect = document.getElementById("allSelect");
+      makeOptions(allSelect, ateAll.map(i => i.key), "選択してください");
+      Array.from(allSelect.options).forEach(opt => {
+        if (!opt.value) return;
+        const item = ateAll.find(i => i.key === opt.value);
+        opt.textContent = `${item.key}（高さ${item.takasa} / Φ${item.phi}）`;
+      });
+      allSelect.value = state.ateNo;
+      allSelect.addEventListener("change", () => selectAteKey(allSelect.value));
+
+      document.getElementById("btnToggleAll").addEventListener("click", () => {
+        const wrap = document.getElementById("allListWrap");
+        wrap.style.display = wrap.style.display === "none" ? "block" : "none";
+      });
+
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => {
+        if (e.key === "Enter" && state.ateNo) { goNext(); return; }
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          if (ateReco.length === 0) return;
+          const cur = ateReco.findIndex(c => c.key === state.ateNo);
+          const next = e.key === "ArrowDown"
+            ? (cur === -1 ? 0 : Math.min(cur + 1, ateReco.length - 1))
+            : (cur === -1 ? 0 : Math.max(cur - 1, 0));
+          selectAteKey(ateReco[next].key);
+          return;
+        }
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < ateReco.length) { e.preventDefault(); selectAteKey(ateReco[idx].key); }
+        }
+      });
+      break;
+    }
+
+    case "toruku": {
+      html = buildHeader(t("q10_title"), t("q10_hint"));
+      html += `<div class="field"><input type="number" id="input" step="1" placeholder="例: 7"></div>`;
+      html += `<div id="errBox" class="error" style="display:none"></div>`;
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      const inp = document.getElementById("input");
+      inp.value = state.toruku !== "" ? state.toruku : Logic.DEFAULT_TORUKU;
+      inp.focus();
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      attachNav({ onNext: tryNext, onBack: goBack });
+      function tryNext() {
+        const v = document.getElementById("input").value;
+        if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
+        const n = Number(v);
+        if (n < 1 || n > 30) { showErr(t("torukuRangeError")); return; }
+        state.toruku = v;
+        goNext();
+      }
+      break;
+    }
+
+    case "yokogeta": {
+      html = buildHeader(t("q11_title"), "");
+      html += `<div class="field"><select id="input">
+        <option value="なし">${t("yokogeta_nashi")}</option>
+        <option value="あり">${t("yokogeta_ari")}</option>
+      </select></div>`;
+      html += `<div class="shortcut-hint">
+        <span class="sc-item"><span class="sc-key">1</span>${t("yokogeta_nashi")}</span>
+        <span class="sc-item"><span class="sc-key">2</span>${t("yokogeta_ari")}</span>
+      </div>`;
+      html += buildBtnRow({ showBack });
+      card().innerHTML = html;
+      const sel = document.getElementById("input");
+      sel.value = state.yokogeta;
+      sel.focus();
+      sel.addEventListener("change", () => { state.yokogeta = sel.value; });
+      attachNav({ onNext: goNext, onBack: goBack });
+      setDocKeydown(e => {
+        if (e.key === "Enter") { goNext(); return; }
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          if (e.key === "1") { e.preventDefault(); state.yokogeta = "なし"; sel.value = "なし"; }
+          else if (e.key === "2") { e.preventDefault(); state.yokogeta = "あり"; sel.value = "あり"; }
+        }
+      });
+      break;
+    }
+
+    case "sakuseisha": {
+      html = buildHeader(t("q12_title"), t("q12_hint"));
+      html += `<div class="field">
+        <input type="text" id="input" list="sakuseishaList" placeholder="例: T.SIKATA" autocomplete="off">
+        <datalist id="sakuseishaList"></datalist>
+      </div>`;
+      html += `<div id="scHint" class="shortcut-hint"></div>`;
+      html += `<div id="errBox" class="error" style="display:none"></div>`;
+      html += buildBtnRow({ showBack, nextLabel: t("finish") });
+      card().innerHTML = html;
+      const inp = document.getElementById("input");
+      inp.value = state.sakuseisha;
+      const dl = document.getElementById("sakuseishaList");
+      Logic.sakuseishaMaster.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        dl.appendChild(opt);
+      });
+      // テンキーショートカット一覧を表示（1〜9 → 1人目〜9人目、0 → 10人目）
+      const hint = document.getElementById("scHint");
+      if (hint) {
+        hint.innerHTML = Logic.sakuseishaMaster.slice(0, 10).map((name, i) => {
+          const k = i === 9 ? "0" : String(i + 1);
+          return `<span class="sc-item"><span class="sc-key">${k}</span>${name}</span>`;
+        }).join("");
+      }
+      inp.addEventListener("keydown", e => {
+        if (e.key === "Enter") { tryNext(); return; }
+        // テンキー（NumLock ON 時）のみショートカット発動
+        if (e.code && e.code.startsWith("Numpad") && /^[0-9]$/.test(e.key)) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < Logic.sakuseishaMaster.length) {
+            e.preventDefault();
+            inp.value = Logic.sakuseishaMaster[idx];
+          }
+        }
+      });
+      inp.focus();
+      attachNav({ onNext: tryNext, onBack: goBack });
+      function tryNext() {
+        const v = document.getElementById("input").value.trim();
+        if (!v) { showErr(t("requiredError")); return; }
+        if (v.length > 10) { showErr(t("sakuseishaMaxError")); return; }
+        if (!/^[A-Za-z0-9./]+$/.test(v)) { showErr(t("sakuseishaFormatError")); return; }
+        state.sakuseisha = v;
+        goNext();
+      }
+      break;
+    }
+
+    case "summary": {
+      const outputText = Logic.generateOutputText({
+        date: new Date().toLocaleDateString("ja-JP"),
+        kikaiNo: state.kikaiNo,
+        tetsugetaNo: state.tetsugetaNo,
+        enbiGetaNo: state.enbiGetaNo,
+        ateNo: state.ateNo,
+        toruku: state.toruku,
+        yokogeta: state.yokogeta,
+        sakuseisha: state.sakuseisha,
+        offsetValue: d.offsetValue,
+        kijunTakasa: state.kijunTakasa,
+        ateDiff: d.ateDiff,
+      });
+      setDocKeydown(null);
+
+      html = buildHeader(t("q13_title"), t("q13_hint"));
+      html += `<table class="summary-table">
+        <tr><td>${t("summary_kikai")}</td><td>${state.kikaiNo}</td></tr>
+        <tr><td>${t("summary_zenchou")}</td><td>${state.zenchou} mm</td></tr>
+        <tr><td>${t("summary_kakou")}</td><td>${state.kakouNagasa} mm</td></tr>
+        <tr><td>${t("summary_enbi")}</td><td>${state.enbiGetaNo}</td></tr>
+        <tr><td>${t("summary_tetsugeta")}</td><td>${state.tetsugetaNo}</td></tr>
+        <tr><td>${t("summary_offset")}</td><td>${Logic.fmt(d.offsetValue)}</td></tr>
+        <tr><td>${t("summary_chushin")}</td><td>${state.chushinKyori} mm</td></tr>
+        <tr><td>${t("summary_ate")}</td><td>${state.ateNo}</td></tr>
+        <tr><td>${t("summary_toruku")}</td><td>${state.toruku} N</td></tr>
+        <tr><td>${t("summary_yokogeta")}</td><td>${state.yokogeta}</td></tr>
+        <tr><td>${t("summary_sakuseisha")}</td><td>${state.sakuseisha}</td></tr>
+      </table>`;
+      const offsetOk = d.offsetValue !== null && !isNaN(d.offsetValue);
+      html += `<textarea id="outputArea" readonly>${outputText}</textarea>`;
+      if (!offsetOk) {
+        html += `<div class="error" style="margin-bottom:8px;font-size:13px;">${t("offsetNullWarning")}</div>`;
+      }
+      html += `<div class="btn-row">
+        <button class="ghost" id="btnBack">${t("back")}</button>
+        <button class="primary" id="btnCopy" ${offsetOk ? "" : "disabled"}>${t("copy")}</button>
+      </div>
+      <div class="btn-row">
+        <button class="ghost" id="btnReset" style="flex:1;">${t("reset")}</button>
+      </div>`;
+      card().innerHTML = html;
+      document.getElementById("btnBack").addEventListener("click", goBack);
+      document.getElementById("btnCopy").addEventListener("click", () => {
+        const ta = document.getElementById("outputArea");
+        ta.select();
+        navigator.clipboard?.writeText(ta.value).catch(() => document.execCommand("copy"));
+        showToast(t("copied"));
+      });
+      document.getElementById("btnReset").addEventListener("click", () => {
+        Object.keys(state).forEach(k => {
+          if (k === "yokogeta") state[k] = "なし";
+          else if (k === "kijunTakasa") state[k] = "50";
+          else state[k] = "";
+        });
+        stepIndex = 0;
+        showHome();
+      });
+      if (offsetOk) {
+        setDocKeydown(e => { if (e.key === "Enter") document.getElementById("btnCopy").click(); });
+      }
+      break;
+    }
+  }
+
+  function showErr(msg) {
+    const box = document.getElementById("errBox");
+    if (!box) return;
+    box.style.display = "block";
+    box.textContent = msg;
+  }
+}
+
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+/* ---------- 塩ビ高さ不足 警告モーダル ---------- */
+function showWarnModal(guideHeight, selectedHeight, onProceed) {
+  const overlay = document.getElementById("warnOverlay");
+  document.getElementById("warnTitle").textContent   = t("enbiWarnTitle");
+  document.getElementById("warnBody").innerHTML      = t("enbiWarnBody").replace(/\n/g, "<br>");
+  document.getElementById("warnVals").innerHTML      =
+    `<span class="wlabel">${t("enbiWarnGuide")}</span>　<span class="v-good">${Logic.fmt(guideHeight)} mm</span><br>` +
+    `<span class="wlabel">${t("enbiWarnSelected")}</span>　<span class="v-bad">${Logic.fmt(selectedHeight)} mm</span>`;
+  document.getElementById("warnBtnBack").textContent    = t("enbiWarnBack");
+  document.getElementById("warnBtnProceed").textContent = t("enbiWarnProceed");
+
+  overlay.classList.add("show");
+
+  const btnBack    = document.getElementById("warnBtnBack");
+  const btnProceed = document.getElementById("warnBtnProceed");
+
+  function close() {
+    overlay.classList.remove("show");
+    btnBack.removeEventListener("click", onBack);
+    btnProceed.removeEventListener("click", onFwd);
+  }
+  function onBack() { close(); }
+  function onFwd()  { close(); onProceed(); }
+
+  btnBack.addEventListener("click", onBack);
+  btnProceed.addEventListener("click", onFwd);
+}
+
+/* ---------- 進捗バー描画 ---------- */
+function renderProgress() {
+  const pct = Math.round(((stepIndex + 1) / TOTAL) * 100);
+  document.getElementById("progressText").textContent = t("step", stepIndex + 1, TOTAL);
+  document.getElementById("progressPct").textContent = pct + "%";
+  document.getElementById("progressFill").style.width = pct + "%";
+}
+
+/* ---------- 全体描画 ---------- */
+function render() {
+  renderProgress();
+  renderStep();
+}
+
+/* ---------- ホーム画面 切り替え ---------- */
+function showHome() {
+  document.getElementById("homeScreen").style.display = "flex";
+  document.getElementById("appMain").style.display    = "none";
+}
+function startApp() {
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("appMain").style.display    = "";
+  render();
+}
+
+/* ---------- ホームボタン イベント ---------- */
+document.getElementById("btnStart").addEventListener("click", startApp);
+document.getElementById("btnHistory").addEventListener("click", () => {
+  showToast("準備中です");
+});
+
+/* ---------- イースターエッグ ---------- */
+const eggOverlay = document.getElementById("eggOverlay");
+let eggTapCount = 0, eggTimer = null;
+document.querySelector(".home-icon").addEventListener("click", () => {
+  eggTapCount++;
+  clearTimeout(eggTimer);
+  eggTimer = setTimeout(() => { eggTapCount = 0; }, 3000);
+  if (eggTapCount >= 5) { eggTapCount = 0; openEgg(); }
+});
+function openEgg()  { eggOverlay.classList.add("show"); }
+function closeEgg() { eggOverlay.classList.remove("show"); }
+eggOverlay.addEventListener("click", e => { if (e.target === eggOverlay) closeEgg(); });
+document.getElementById("eggClose").addEventListener("click", closeEgg);
+</script>
+</body>
+</html>
