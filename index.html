@@ -1299,6 +1299,31 @@ function setDocKeydown(fn) {
   if (fn) document.addEventListener("keydown", fn);
 }
 
+/* ---------- 数字ショートカットの判定を一箇所にまとめる ----------
+   各画面（機械・塩ビゲタ・当てゲタ・横ゲタ・作成者）で「1〜9・0キーで候補を選ぶ」
+   ショートカットを使っている。以前は各画面で e.key が数字かどうかを判定していたが、
+   キーボード配列や入力状態によっては数字キー（上段の Digit）でも e.key が数字にならず、
+   取りこぼす可能性があった。テンキー（Numpad）と数字キー（Digit）のどちらでも確実に効くよう、
+   まず e.code から数字を正規化し、それが無い環境だけ e.key にフォールバックする。
+------------------------------------------------------------------ */
+function getShortcutDigit(e) {
+  if (!e || e.ctrlKey || e.altKey || e.metaKey) return null;
+  // e.code を最優先で正規化（Numpad1 / Digit1 → "1"）。配列差で数字を取りこぼさない。
+  if (e.code) {
+    const m = /^(?:Numpad|Digit)([0-9])$/.exec(e.code);
+    if (m) return m[1];
+  }
+  // e.code を持たない古い環境向けのフォールバック
+  if (typeof e.key === "string" && /^[0-9]$/.test(e.key)) return e.key;
+  return null;
+}
+// 数字を候補リストの添字に変換する（1→0番目, …, 9→8番目, 0→9番目）。該当なしは -1。
+function getShortcutIndex(e) {
+  const d = getShortcutDigit(e);
+  if (d === null) return -1;
+  return d === "0" ? 9 : Number(d) - 1;
+}
+
 /* ---------- ステップ定義 ----------
    「塩ビ高さの目安を確認する画面」と「オフセット値を確認する画面」は廃止。
    目安は塩ビゲタNo.選択画面の中に表示済み、Zオフセット値は確認・出力画面で確認できるため。
@@ -1740,9 +1765,9 @@ function renderStep() {
           selectKikai(enabledKikai[next]);
           return;
         }
-        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
-          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
-          if (idx < enabledKikai.length) { e.preventDefault(); selectKikai(enabledKikai[idx]); }
+        const kikaiIdx = getShortcutIndex(e);
+        if (kikaiIdx >= 0 && kikaiIdx < enabledKikai.length) {
+          e.preventDefault(); selectKikai(enabledKikai[kikaiIdx]);
         }
       });
       break;
@@ -1946,9 +1971,9 @@ function renderStep() {
           selectKey(cardList[next].key);
           return;
         }
-        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
-          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
-          if (idx < cardList.length) { e.preventDefault(); selectKey(cardList[idx].key); }
+        const enbiIdx = getShortcutIndex(e);
+        if (enbiIdx >= 0 && enbiIdx < cardList.length) {
+          e.preventDefault(); selectKey(cardList[enbiIdx].key);
         }
       });
       break;
@@ -2107,9 +2132,9 @@ function renderStep() {
           selectAteKey(ateCardList[next].key);
           return;
         }
-        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
-          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
-          if (idx < ateCardList.length) { e.preventDefault(); selectAteKey(ateCardList[idx].key); }
+        const ateIdx = getShortcutIndex(e);
+        if (ateIdx >= 0 && ateIdx < ateCardList.length) {
+          e.preventDefault(); selectAteKey(ateCardList[ateIdx].key);
         }
       });
       break;
@@ -2161,10 +2186,9 @@ function renderStep() {
       attachNav({ onNext: goNext });
       setDocKeydown(e => {
         if (e.key === "Enter") { goNext(); return; }
-        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
-          if (e.key === "1") { e.preventDefault(); state.yokogeta = "なし"; sel.value = "なし"; }
-          else if (e.key === "2") { e.preventDefault(); state.yokogeta = "あり"; sel.value = "あり"; }
-        }
+        const yokoDigit = getShortcutDigit(e);
+        if (yokoDigit === "1") { e.preventDefault(); state.yokogeta = "なし"; sel.value = "なし"; }
+        else if (yokoDigit === "2") { e.preventDefault(); state.yokogeta = "あり"; sel.value = "あり"; }
       });
       break;
     }
@@ -2213,9 +2237,9 @@ function renderStep() {
           selectSakuseisha(allSakuseisha[next]);
           return;
         }
-        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
-          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
-          if (idx < allSakuseisha.length) { e.preventDefault(); selectSakuseisha(allSakuseisha[idx]); }
+        const sakuIdx = getShortcutIndex(e);
+        if (sakuIdx >= 0 && sakuIdx < allSakuseisha.length) {
+          e.preventDefault(); selectSakuseisha(allSakuseisha[sakuIdx]);
         }
       });
       break;
