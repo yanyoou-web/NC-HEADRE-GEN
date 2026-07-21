@@ -1782,7 +1782,10 @@ function renderStep() {
       const inp = document.getElementById("input");
       inp.value = state.zenchou;
       inp.focus();
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNextNumber(); });
+      // Enter は入力欄側だけで処理し、document へは伝播させない。
+      // 伝播させると、遷移先の画面が同じ Enter で installした keydown ハンドラに拾われ、
+      // 1画面（横ゲタ等）を飛ばして進んでしまう不具合につながるため。
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNextNumber(); } });
       attachNav({ onNext: tryNextNumber });
       function trySave() {
         const v = document.getElementById("input").value;
@@ -1809,7 +1812,7 @@ function renderStep() {
       const inp = document.getElementById("input");
       inp.value = state.kakouNagasa;
       inp.focus();
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
       attachNav({ onNext: tryNext });
       function trySave() {
         const v = document.getElementById("input").value;
@@ -2002,7 +2005,7 @@ function renderStep() {
       });
       kijunSel.value = state.kijunTakasa;
       kijunSel.addEventListener("change", () => { state.kijunTakasa = kijunSel.value; });
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
       attachNav({ onNext: tryNext });
       function trySave() {
         const rawInput = document.getElementById("input");
@@ -2149,7 +2152,7 @@ function renderStep() {
       const inp = document.getElementById("input");
       inp.value = state.toruku !== "" ? state.toruku : Logic.DEFAULT_TORUKU;
       inp.focus();
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
       attachNav({ onNext: tryNext });
       function trySave() {
         const v = document.getElementById("input").value;
