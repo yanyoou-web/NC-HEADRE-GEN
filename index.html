@@ -1775,20 +1775,27 @@ function renderStep() {
 
     case "zenchou": {
       html = buildHeader(t("q2_title"), t("q2_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_zenchou")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_zenchou")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({});
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.zenchou;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       // Enter は入力欄側だけで処理し、document へは伝播させない。
       // 伝播させると、遷移先の画面が同じ Enter で installした keydown ハンドラに拾われ、
       // 1画面（横ゲタ等）を飛ばして進んでしまう不具合につながるため。
       inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNextNumber(); } });
       attachNav({ onNext: tryNextNumber });
       function trySave() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "") return true; // 空欄なら保存済みの値のまま移動してよい
         if (isNaN(v)) { showErr(t("numberError")); return false; }
         const n = Number(v);
@@ -1805,17 +1812,24 @@ function renderStep() {
 
     case "kakou": {
       html = buildHeader(t("q3_title"), t("q3_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_kakou")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_kakou")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({});
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.kakouNagasa;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
       attachNav({ onNext: tryNext });
       function trySave() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "") return true; // 空欄なら保存済みの値のまま移動してよい
         if (isNaN(v)) { showErr(t("numberError")); return false; }
         const n = Number(v);
@@ -2145,17 +2159,24 @@ function renderStep() {
 
     case "toruku": {
       html = buildHeader(t("q10_title"), t("q10_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_toruku")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_toruku")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({});
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.toruku !== "" ? state.toruku : Logic.DEFAULT_TORUKU;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
       attachNav({ onNext: tryNext });
       function trySave() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "") return true; // 空欄なら保存済みの値のまま移動してよい
         if (isNaN(v)) { showErr(t("numberError")); return false; }
         const n = Number(v);
