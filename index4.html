@@ -86,7 +86,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:9px;
+    font-size:11px;
     font-weight:700;
     font-family:inherit;
     background:#0d1622;
@@ -95,10 +95,6 @@
     cursor:pointer;
     padding:0;
     transition:all .15s;
-  }
-  .step-dot-label{
-    text-align:center;
-    line-height:1.15;
   }
   .step-dot.done{
     background:rgba(0,217,255,0.08);
@@ -2376,8 +2372,6 @@ function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
  * タップ時は goToStep(i) を呼び、入力チェック（trySave）や
  * ロック中の丸への移動禁止はすべて goToStep 側でまとめて行う。
  */
-const STEP_DOT_LABELS = ["機械", "加工全長", "加工長さ", "塩ビ選択", "アテ距離", "アテ選択", "トルク", "横ゲタ", "作成者", "出力"];
-
 function renderStepDots() {
   const maxIdx = computeMaxUnlockedIndex();
   if (stepIndex > maxIdx) stepIndex = maxIdx; // 念のための保険（本来は起こらない想定）
@@ -2388,11 +2382,7 @@ function renderStepDots() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "step-dot " + (i === stepIndex ? "current" : (locked ? "locked" : "done"));
-    const label = STEP_DOT_LABELS[i] || String(i + 1);
-    const labelHtml = label.length === 4
-      ? label.slice(0, 2) + "<br>" + label.slice(2) // 4文字ラベルは2行に分けて表示
-      : label; // 2〜3文字ラベルは1行のまま表示
-    btn.innerHTML = '<span class="step-dot-label">' + labelHtml + "</span>";
+    btn.textContent = String(i + 1);
     btn.disabled = locked;
     btn.setAttribute("aria-label", t("step", i + 1, TOTAL));
     btn.setAttribute("aria-current", i === stepIndex ? "step" : "false");
