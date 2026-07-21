@@ -1622,17 +1622,24 @@ function renderStep() {
 
     case "zenchou": {
       html = buildHeader(t("q2_title"), t("q2_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_zenchou")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_zenchou")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({ showBack });
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.zenchou;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNextNumber(); });
       attachNav({ onNext: tryNextNumber, onBack: goBack });
       function tryNextNumber() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
         const n = Number(v);
         if (n < 1 || n > 200) { showErr(t("zenchouRangeError", 1, 200)); return; }
@@ -1644,17 +1651,24 @@ function renderStep() {
 
     case "kakou": {
       html = buildHeader(t("q3_title"), t("q3_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_kakou")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_kakou")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({ showBack });
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.kakouNagasa;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
       attachNav({ onNext: tryNext, onBack: goBack });
       function tryNext() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
         const n = Number(v);
         if (n < 0 || n > 100) { showErr(t("kakouRangeError", 0, 100)); return; }
@@ -2002,17 +2016,24 @@ function renderStep() {
 
     case "toruku": {
       html = buildHeader(t("q10_title"), t("q10_hint"));
-      html += `<div class="field"><input type="number" id="input" step="1" placeholder="${t("ph_toruku")}" aria-labelledby="qTitle"></div>`;
+      html += `<div class="field"><input type="text" id="input" placeholder="${t("ph_toruku")}" aria-labelledby="qTitle"></div>`;
       html += `<div id="errBox" role="alert" aria-live="polite" class="error" style="display:none"></div>`;
       html += buildBtnRow({ showBack });
       card().innerHTML = html;
       const inp = document.getElementById("input");
       inp.value = state.toruku !== "" ? state.toruku : Logic.DEFAULT_TORUKU;
       inp.focus();
+      inp.addEventListener("blur", () => {
+        const calced = evalSimpleArithmetic(inp.value);
+        if (calced !== null) { inp.value = calced; }
+      });
       inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
       attachNav({ onNext: tryNext, onBack: goBack });
       function tryNext() {
-        const v = document.getElementById("input").value;
+        const rawInput = document.getElementById("input");
+        const calced = evalSimpleArithmetic(rawInput.value);
+        if (calced !== null) { rawInput.value = calced; }
+        const v = rawInput.value;
         if (v === "" || isNaN(v)) { showErr(t("numberError")); return; }
         const n = Number(v);
         if (n < 1 || n > 30) { showErr(t("torukuRangeError")); return; }
