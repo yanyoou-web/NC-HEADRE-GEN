@@ -10,19 +10,12 @@ const Logic = (() => {
 
   /* ----------------------------------------------------
      1) 機械No. マスター
-     爪長さ / 鉄ゲタNo.初期値 / 機械オフセット値 / 機種
+     爪長さ / 鉄ゲタ高さ / 鉄ゲタNo.初期値 / 機械オフセット値 / 機種
      機種は "森精機〇〇" か "ツガミ" のどちらかを正確に入力。
-
-     ■ 鉄ゲタの高さ・幅などの詳細値について
-       ここには「その機械が標準で使う鉄ゲタNo.（tetsugetaNo）」だけを登録する。
-       高さ・幅などの詳細な数値は、下の tetsugetaMaster 側にのみ登録し、
-       ここには重複して持たせない（tetsugetaNo を頼りに tetsugetaMaster を参照する）。
-       ※ 今後 tetsugetaMaster にピッチなどの項目が増えても、
-          tetsugetaMaster 側を1回直すだけで済み、機械側との食い違いが起きない。
 
      ■ グレーアウト（プルダウン選択不可）について
        tumeNagasa / tetsugetaNo / offset のいずれかが null の
-       行は、「加工する機械No.を選んでください」の画面で「（データ未登録）」と表示され選択できません。
+       行は、画面①で「（データ未登録）」と表示され選択できません。
 
      ■ グレーアウトを解除する方法
        下記 3項目を実際の値に書き換えてください。
@@ -37,32 +30,31 @@ const Logic = (() => {
        プルダウンで選択不可にしている箇所を確認できます。
   ---------------------------------------------------------- */
   const kikaiMaster = {
-    "NCL-001":          { tumeNagasa: null, tetsugetaNo: null, offset: null,  kishu: "森精機CL-25-2" },
-    "NCL-003":          { tumeNagasa: null, tetsugetaNo: null, offset: null,  kishu: "森精機CL-25-1" },
-    "NCL-004":          { tumeNagasa: 62, tetsugetaNo: "T-8", offset: 150.925,  kishu: "森精機CL-20" },
-    "NCL-010":          { tumeNagasa: null, tetsugetaNo: null, offset: 239.606,  kishu: "森精機CL-25-2" },
-    "NCL-012":          { tumeNagasa: 62, tetsugetaNo: "T-8", offset: 165.494,  kishu: "森精機CL-20" },
-    "NCL-013":          { tumeNagasa: 62, tetsugetaNo: "T-8", offset: 166.329,  kishu: "森精機CL-20" },
-    "NCL-014":          { tumeNagasa: null, tetsugetaNo: null, offset: 238.179,  kishu: "森精機CL-25-2" },
-    "NCL-015":          { tumeNagasa: 50, tetsugetaNo: "T-1", offset: 125.708,  kishu: "森精機CL-150" },
-    "NCL-015長爪":      { tumeNagasa: null, tetsugetaNo: "T-10", offset: 128.502,  kishu: "森精機CL-150" },
-    "NCL-044":          { tumeNagasa: 62, tetsugetaNo: "T-1", offset: 125.404,  kishu: "森精機CL-2000-1" },
-    "NCL-045":          { tumeNagasa: 62, tetsugetaNo: "T-8", offset: 252.558,  kishu: "森精機NL-2000" },
-    "NCL-077":          { tumeNagasa: 62, tetsugetaNo: "T-1", offset: 124.988,  kishu: "森精機CL-2000-2" },
-    "NCL-078":          { tumeNagasa: 62, tetsugetaNo: "T-1", offset: 124.816,  kishu: "森精機CL-2000-2" },
-    "NCL-079":          { tumeNagasa: 62, tetsugetaNo: "T-1", offset: 124.885,  kishu: "森精機CL-2000-2" },
-    "NCL-085":          { tumeNagasa: 62, tetsugetaNo: "T-9", offset: 199.575,  kishu: "森精機NLX2500" },
-    "NCL-093":          { tumeNagasa: 68, tetsugetaNo: "T-2", offset: -199.044, kishu: "ツガミ" },
-    "NCL-094":          { tumeNagasa: 68, tetsugetaNo: "T-2", offset: -199.015, kishu: "ツガミ" },
-    "NCL-0116":         { tumeNagasa: 63, tetsugetaNo: "T-9", offset: 87.896, kishu: "ツガミ" },
+    "NCL-001":          { tumeNagasa: null, tetsugetaTakasa: 5,  tetsugetaNo: null, offset: null,  kishu: "森精機CL-25-2",},
+    "NCL-003":          { tumeNagasa: null, tetsugetaTakasa: 5, tetsugetaNo: null, offset: null,  kishu: "森精機CL-25-1" },
+    "NCL-004":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-8", offset: 150.925,  kishu: "森精機CL-20",},
+    "NCL-010":          { tumeNagasa: null, tetsugetaTakasa: 5, tetsugetaNo: null, offset: 239.606,  kishu: "森精機CL-25-2" },
+    "NCL-012":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-8", offset: 165.494,  kishu: "森精機CL-20" },
+    "NCL-013":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-8", offset: 166.329,  kishu: "森精機CL-20" },
+    "NCL-014":          { tumeNagasa: null, tetsugetaTakasa: 5, tetsugetaNo: null, offset: 238.179,  kishu: "森精機CL-25-2" },
+    "NCL-015":          { tumeNagasa: 50, tetsugetaTakasa: 5,  tetsugetaNo: "T-1", offset: null,  kishu: "森精機CL-150" },
+    "NCL-015長爪":      { tumeNagasa: null, tetsugetaTakasa: 17.48, tetsugetaNo: "T-10", offset: 128.502,  kishu: "森精機CL-150" },
+    "NCL-044":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-1", offset: 125.404,  kishu: "森精機CL-2000-1" },
+    "NCL-045":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-8", offset: 252.558,  kishu: "森精機NL-2000" },
+    "NCL-077":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-1", offset: 124.988,  kishu: "森精機CL-2000-2" },
+    "NCL-078":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-1", offset: 124.816,  kishu: "森精機CL-2000-2" },
+    "NCL-079":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-1", offset: 124.885,  kishu: "森精機CL-2000-2" },
+    "NCL-085":          { tumeNagasa: 62, tetsugetaTakasa: 5,  tetsugetaNo: "T-9", offset: 199.575,  kishu: "森精機NLX2500" },
+    "NCL-093":          { tumeNagasa: 68, tetsugetaTakasa: 11, tetsugetaNo: "T-2", offset: -199.044, kishu: "ツガミ" },
+    "NCL-094":          { tumeNagasa: 68, tetsugetaTakasa: 11, tetsugetaNo: "T-2", offset: -199.015, kishu: "ツガミ" },
+    "NCL-0116":         { tumeNagasa: 62, tetsugetaTakasa: 5, tetsugetaNo: "T-9", offset: 87.896, kishu: "森精機NLX2500" },
   };
-
 
   /*
    * 【isKikaiComplete】機械No.のデータが揃っているか確認する
    *
    * tumeNagasa / tetsugetaNo / offset の3項目がすべて入力済みなら true を返す。
-   * いずれかが null の場合は false → 「加工する機械No.を選んでください」の画面のプルダウンでグレーアウト（選択不可）になる。
+   * いずれかが null の場合は false → 画面①のプルダウンでグレーアウト（選択不可）になる。
    */
   function isKikaiComplete(kikaiNo) {
     const m = kikaiMaster[kikaiNo];
@@ -273,9 +265,6 @@ const Logic = (() => {
     "Y.YANO",
     "RIN",
     "H.SASAKI",
-    "DAI",
-    "NAKATANI",
-    "FUJIMOTO",
   ];
 
   /* ----------------------------------------------------
@@ -283,22 +272,23 @@ const Logic = (() => {
      ─────────────────────────────────────────────────────
      【処理の全体的な流れ】
 
-       「加工する機械No.を選んでください」 → kikaiMaster から爪長さ・オフセット値・鉄ゲタNo.初期値などを取得
-                                          （同じ画面内で鉄ゲタNo.も自動セット・手動変更が可能）
+       ① 機械No.選択 → kikaiMaster から爪長さ・オフセット値などを取得
                 ↓
-       「加工後の全長を入力してください」「加工長さを入力してください」を入力
+       ② ③ 全長・加工長さを入力
                 ↓
-       「塩ビ高さの目安を確認してください」 calcEnbiGuide → 塩ビゲタの「目安の高さ」を計算して画面に表示
+       ④ calcEnbiGuide → 塩ビゲタの「目安の高さ」を計算して画面に表示
                 ↓
-       「塩ビゲタNo.を選んでください」 getEnbiRecommendations → 目安に近い塩ビゲタを上位5件に絞って
+       ⑤ getEnbiRecommendations → 目安に近い塩ビゲタを上位5件に絞って
                                    画面のおすすめカードに表示。作業者が選ぶ。
                 ↓
-       「オフセット値を確認してください」 calcOffset → 選んだ塩ビ・鉄ゲタ・全長をもとに
+       ⑥ 鉄ゲタを選ぶ（機械選択時に初期値が自動セット済み）
+                ↓
+       ⑦ calcOffset → 選んだ塩ビ・鉄ゲタ・全長をもとに
                        Z軸のワーク原点オフセット値を計算して画面に表示
                 ↓
-       「下アテから中心までの距離を入力してください」「アテNo.を選んでください」 → calcAteTakasa でアテ高さを計算
+       ⑧⑨ 下アテ中心距離を入力 → calcAteTakasa でアテ高さを計算
                 ↓
-       「締め付けトルクを入力してください（N）」以降はトルク・横ゲタ・作成者を入力
+       ⑩ 以降はトルク・横ゲタ・作成者を入力
                 ↓
        最終 generateOutputText → すべての入力値と計算結果を
                                   CNCプログラムに貼り付けるテキストとして組み立てる
@@ -306,7 +296,7 @@ const Logic = (() => {
   ---------------------------------------------------------- */
 
   /*
-   * 【calcEnbiGuide】「塩ビ高さの目安を確認してください」の画面で表示される「塩ビゲタ 目安の高さ」を計算する
+   * 【calcEnbiGuide】画面④ で表示される「塩ビゲタ 目安の高さ」を計算する
    *
    * 目的：
    *   ワークをチャックで正しくつかんだとき、ゲタ頂点が加工原点にぴったり
@@ -317,13 +307,12 @@ const Logic = (() => {
    *
    * 受け取る値：
    *   tumeNagasa      … 機械のツメ長さ（kikaiMaster から自動取得）
-   *   tetsugetaTakasa … 「加工する機械No.を選んでください」の画面で選んだ鉄ゲタNo.をもとに
-   *                     tetsugetaMaster から取得した高さ
-   *   zenchou         … 「加工後の全長を入力してください」の画面で入力した「加工後の全長」
-   *   kakouNagasa     … 「加工長さを入力してください」の画面で入力した「加工長さ」
+   *   tetsugetaTakasa … 選んだ鉄ゲタの高さ（kikaiMaster の初期値を自動セット）
+   *   zenchou         … 画面②で入力した「加工後の全長」
+   *   kakouNagasa     … 画面③で入力した「加工長さ」
    *
    * 渡す先：
-   *   → 「塩ビ高さの目安を確認してください」の画面に「目安 〇〇mm」として表示
+   *   → 画面④ に「目安 〇〇mm」として表示
    *   → getEnbiRecommendations に渡して、近い塩ビゲタを絞り込む
    */
   function calcEnbiGuide(tumeNagasa, tetsugetaTakasa, zenchou, kakouNagasa) {
@@ -334,7 +323,7 @@ const Logic = (() => {
   }
 
   /*
-   * 【calcOffset】「オフセット値を確認してください」の画面で表示される「Zオフセット値」を計算する
+   * 【calcOffset】画面⑦ で表示される「Zオフセット値」を計算する
    *
    * 目的：
    *   機械に G10 L2 P0 Z〇〇 として書き込む数値を求める。
@@ -347,12 +336,12 @@ const Logic = (() => {
    * 受け取る値：
    *   kishu           … 機種区分（"森精機〇〇" or "ツガミ"、kikaiMaster から自動取得）
    *   kikaiOffset     … 機械固有のオフセット値（kikaiMaster に登録済みの固定値）
-   *   enbiTakasa      … 「塩ビゲタNo.を選んでください」の画面で選んだ塩ビゲタの高さ（enbiGetaMaster から自動取得）
-   *   zenchou         … 「加工後の全長を入力してください」の画面で入力した「加工後の全長」
-   *   tetsugetaTakasa … 「加工する機械No.を選んでください」の画面で選んだ鉄ゲタの高さ（tetsugetaMaster から自動取得）
+   *   enbiTakasa      … 画面⑤で選んだ塩ビゲタの高さ（enbiGetaMaster から自動取得）
+   *   zenchou         … 画面②で入力した「加工後の全長」
+   *   tetsugetaTakasa … 画面⑥で選んだ鉄ゲタの高さ（tetsugetaMaster から自動取得）
    *
    * 渡す先：
-   *   → 「オフセット値を確認してください」の画面に「Zオフセット値：〇〇」として表示（作業者が確認）
+   *   → 画面⑦ に「Zオフセット値：〇〇」として表示（作業者が確認）
    *   → generateOutputText に渡して "G10 L2 P0 Z〇〇" の行を生成する
    */
   function calcOffset(kishu, kikaiOffset, enbiTakasa, zenchou, tetsugetaTakasa) {
@@ -366,7 +355,7 @@ const Logic = (() => {
   }
 
   /*
-   * 【calcAteTakasa】「アテNo.を選んでください」の画面で表示される「アテの高さ」を計算する
+   * 【calcAteTakasa】画面⑨ で表示される「アテの高さ」を計算する
    *
    * 目的：
    *   下アテの中心位置から、使うべきアテの高さを逆算する。
@@ -375,10 +364,10 @@ const Logic = (() => {
    * 式：  50 － 下アテから中心までの距離
    *
    * 受け取る値：
-   *   chushinKyori … 「下アテから中心までの距離を入力してください」の画面で入力した「下アテから中心までの距離（mm）」
+   *   chushinKyori … 画面⑧で入力した「下アテから中心までの距離（mm）」
    *
    * 渡す先：
-   *   → 「アテNo.を選んでください」の画面に「計算されたアテ高さ：〇〇mm」として表示
+   *   → 画面⑨ に「計算されたアテ高さ：〇〇mm」として表示
    *   → 表示された高さをもとに作業者がアテNo.（C-xx-xx）を選ぶ
    */
   function calcAteTakasa(chushinKyori, kijunTakasa = 50) {
@@ -389,7 +378,7 @@ const Logic = (() => {
   }
 
   /*
-   * 【getEnbiRecommendations】「塩ビゲタNo.を選んでください」の画面のおすすめカードを作る
+   * 【getEnbiRecommendations】画面⑤ のおすすめカードを作る
    *
    * 目的：
    *   calcEnbiGuide で求めた「目安の高さ」に近い塩ビゲタを
@@ -400,7 +389,7 @@ const Logic = (() => {
    *   guideHeight … calcEnbiGuide の計算結果（目安の高さ mm）
    *
    * 渡す先：
-   *   → 「塩ビゲタNo.を選んでください」の画面のおすすめカード（上位5件）と「全件リスト」の両方に渡す
+   *   → 画面⑤ のおすすめカード（上位5件）と「全件リスト」の両方に渡す
    */
   function getEnbiRecommendations(guideHeight) {
     const hasGuide = !(guideHeight === null || guideHeight === undefined || isNaN(guideHeight));
@@ -428,7 +417,7 @@ const Logic = (() => {
   }
 
   /*
-   * 【getAteRecommendations】「アテNo.を選んでください」の画面のおすすめアテカードを作る
+   * 【getAteRecommendations】画面⑨ のおすすめアテカードを作る
    *
    * 目的：
    *   calcAteTakasa で求めた「アテ高さ目安」に対して、差が3mm以内の
@@ -439,7 +428,7 @@ const Logic = (() => {
    *   guideHeight … calcAteTakasa の計算結果（アテ高さの目安 mm）
    *
    * 渡す先：
-   *   → 「アテNo.を選んでください」の画面のおすすめカードと「全件リスト」の両方に渡す
+   *   → 画面⑨ のおすすめカードと「全件リスト」の両方に渡す
    */
   function getAteRecommendations(guideHeight) {
     const hasGuide = !(guideHeight === null || guideHeight === undefined || isNaN(guideHeight));
@@ -497,7 +486,8 @@ const Logic = (() => {
    *   (日付)
    *   (作成者)
    *   (TETUGETA=鉄ゲタNo.)
-   *   (ATE=アテNo.)(調整用ワッシャーmm)  … すべての機械で共通表記
+   *   (ATE=アテNo.)(調整用ワッシャーmm)  … 通常機械
+   *   (ATE=アテNo.)(調整用ワッシャー)    … 手動入力機械（MANUAL_OFFSET_KIKAI）
    *   (ENNBI=塩ビNo.)
    *   (KIKAI=機械No.)
    *   (TORUKU=トルク)
@@ -514,11 +504,12 @@ const Logic = (() => {
 
     const yokogetaOut = yokogeta === "なし" ? "0" : yokogeta === "あり" ? "1" : (yokogeta ?? "");
     const enbiOut = enbiGetaNo === "なし 0" ? "0" : (enbiGetaNo ?? "");
+    const manualOffset = isManualOffsetKikai(kikaiNo);
 
     let ateLine = labeled("ATE", ateNo);
     if (ateDiff !== null && ateDiff !== undefined && !isNaN(ateDiff) && Math.abs(ateDiff) >= 0.01) {
       const diffStr = ateDiff >= 0 ? fmt(ateDiff) : `-${fmt(Math.abs(ateDiff))}`;
-      ateLine += `(${diffStr}mm)`;
+      ateLine += manualOffset ? `(${diffStr})` : `(${diffStr}mm)`;
     }
 
     const lines = [
@@ -540,12 +531,12 @@ M1(NYUURYOKU)`,];
    * 【getEnbiWidthOptions】塩ビゲタに登録されている「幅」の種類を取り出す
    *
    * 目的：
-   *   「塩ビゲタNo.を選んでください」の画面にある「幅で絞り込み」ボタンの選択肢を作る。
+   *   画面⑤の「幅で絞り込み」ボタンの選択肢を作る。
    *   一覧データ（enbiGetaMaster）から自動で集めるので、
    *   今後ゲタを追加しても選択肢は自動で増える。
    *
    * 渡す先：
-   *   → 「塩ビゲタNo.を選んでください」の画面の絞り込みボタン
+   *   → 画面⑤の絞り込みボタン
    */
   function getEnbiWidthOptions() {
     const set = new Set();
@@ -559,12 +550,12 @@ M1(NYUURYOKU)`,];
    * 【getAtePhiOptions】アテに登録されている「Φ」の種類を取り出す
    *
    * 目的：
-   *   「アテNo.を選んでください」の画面にある「Φで絞り込み」ボタンの選択肢を作る。
+   *   画面⑨の「Φで絞り込み」ボタンの選択肢を作る。
    *   一覧データ（ateMaster）から自動で集めるので、
    *   今後アテを追加しても選択肢は自動で増える。
    *
    * 渡す先：
-   *   → 「アテNo.を選んでください」の画面の絞り込みボタン
+   *   → 画面⑨の絞り込みボタン
    */
   function getAtePhiOptions() {
     const set = new Set();
@@ -578,12 +569,12 @@ M1(NYUURYOKU)`,];
    * 【getEnbiAnaOptions】塩ビゲタに登録されている「穴Φ」の種類を取り出す
    *
    * 目的：
-   *   「塩ビゲタNo.を選んでください」の画面にある「Φで絞り込み」ボタンの選択肢を作る。
+   *   画面⑤の「Φで絞り込み」ボタンの選択肢を作る。
    *   穴あき治具（BA-*）の ana から自動で集めるので、
    *   今後ゲタを追加しても選択肢は自動で増える。
    *
    * 渡す先：
-   *   → 「塩ビゲタNo.を選んでください」の画面の絞り込みボタン
+   *   → 画面⑤の絞り込みボタン
    */
   function getEnbiAnaOptions() {
     const set = new Set();

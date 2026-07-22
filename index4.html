@@ -86,7 +86,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:9px;
+    font-size:11px;
     font-weight:700;
     font-family:inherit;
     background:#0d1622;
@@ -95,10 +95,6 @@
     cursor:pointer;
     padding:0;
     transition:all .15s;
-  }
-  .step-dot-label{
-    text-align:center;
-    line-height:1.15;
   }
   .step-dot.done{
     background:rgba(0,217,255,0.08);
@@ -1299,31 +1295,6 @@ function setDocKeydown(fn) {
   if (fn) document.addEventListener("keydown", fn);
 }
 
-/* ---------- 数字ショートカットの判定を一箇所にまとめる ----------
-   各画面（機械・塩ビゲタ・当てゲタ・横ゲタ・作成者）で「1〜9・0キーで候補を選ぶ」
-   ショートカットを使っている。以前は各画面で e.key が数字かどうかを判定していたが、
-   キーボード配列や入力状態によっては数字キー（上段の Digit）でも e.key が数字にならず、
-   取りこぼす可能性があった。テンキー（Numpad）と数字キー（Digit）のどちらでも確実に効くよう、
-   まず e.code から数字を正規化し、それが無い環境だけ e.key にフォールバックする。
------------------------------------------------------------------- */
-function getShortcutDigit(e) {
-  if (!e || e.ctrlKey || e.altKey || e.metaKey) return null;
-  // e.code を最優先で正規化（Numpad1 / Digit1 → "1"）。配列差で数字を取りこぼさない。
-  if (e.code) {
-    const m = /^(?:Numpad|Digit)([0-9])$/.exec(e.code);
-    if (m) return m[1];
-  }
-  // e.code を持たない古い環境向けのフォールバック
-  if (typeof e.key === "string" && /^[0-9]$/.test(e.key)) return e.key;
-  return null;
-}
-// 数字を候補リストの添字に変換する（1→0番目, …, 9→8番目, 0→9番目）。該当なしは -1。
-function getShortcutIndex(e) {
-  const d = getShortcutDigit(e);
-  if (d === null) return -1;
-  return d === "0" ? 9 : Number(d) - 1;
-}
-
 /* ---------- ステップ定義 ----------
    「塩ビ高さの目安を確認する画面」と「オフセット値を確認する画面」は廃止。
    目安は塩ビゲタNo.選択画面の中に表示済み、Zオフセット値は確認・出力画面で確認できるため。
@@ -1765,9 +1736,9 @@ function renderStep() {
           selectKikai(enabledKikai[next]);
           return;
         }
-        const kikaiIdx = getShortcutIndex(e);
-        if (kikaiIdx >= 0 && kikaiIdx < enabledKikai.length) {
-          e.preventDefault(); selectKikai(enabledKikai[kikaiIdx]);
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < enabledKikai.length) { e.preventDefault(); selectKikai(enabledKikai[idx]); }
         }
       });
       break;
@@ -1786,10 +1757,7 @@ function renderStep() {
         const calced = evalSimpleArithmetic(inp.value);
         if (calced !== null) { inp.value = calced; }
       });
-      // Enter は入力欄側だけで処理し、document へは伝播させない。
-      // 伝播させると、遷移先の画面が同じ Enter で installした keydown ハンドラに拾われ、
-      // 1画面（横ゲタ等）を飛ばして進んでしまう不具合につながるため。
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNextNumber(); } });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNextNumber(); });
       attachNav({ onNext: tryNextNumber });
       function trySave() {
         const rawInput = document.getElementById("input");
@@ -1823,7 +1791,7 @@ function renderStep() {
         const calced = evalSimpleArithmetic(inp.value);
         if (calced !== null) { inp.value = calced; }
       });
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
       attachNav({ onNext: tryNext });
       function trySave() {
         const rawInput = document.getElementById("input");
@@ -1988,9 +1956,9 @@ function renderStep() {
           selectKey(cardList[next].key);
           return;
         }
-        const enbiIdx = getShortcutIndex(e);
-        if (enbiIdx >= 0 && enbiIdx < cardList.length) {
-          e.preventDefault(); selectKey(cardList[enbiIdx].key);
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < cardList.length) { e.preventDefault(); selectKey(cardList[idx].key); }
         }
       });
       break;
@@ -2019,7 +1987,7 @@ function renderStep() {
       });
       kijunSel.value = state.kijunTakasa;
       kijunSel.addEventListener("change", () => { state.kijunTakasa = kijunSel.value; });
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
       attachNav({ onNext: tryNext });
       function trySave() {
         const rawInput = document.getElementById("input");
@@ -2149,9 +2117,9 @@ function renderStep() {
           selectAteKey(ateCardList[next].key);
           return;
         }
-        const ateIdx = getShortcutIndex(e);
-        if (ateIdx >= 0 && ateIdx < ateCardList.length) {
-          e.preventDefault(); selectAteKey(ateCardList[ateIdx].key);
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < ateCardList.length) { e.preventDefault(); selectAteKey(ateCardList[idx].key); }
         }
       });
       break;
@@ -2170,7 +2138,7 @@ function renderStep() {
         const calced = evalSimpleArithmetic(inp.value);
         if (calced !== null) { inp.value = calced; }
       });
-      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); tryNext(); } });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") tryNext(); });
       attachNav({ onNext: tryNext });
       function trySave() {
         const rawInput = document.getElementById("input");
@@ -2210,9 +2178,10 @@ function renderStep() {
       attachNav({ onNext: goNext });
       setDocKeydown(e => {
         if (e.key === "Enter") { goNext(); return; }
-        const yokoDigit = getShortcutDigit(e);
-        if (yokoDigit === "1") { e.preventDefault(); state.yokogeta = "なし"; sel.value = "なし"; }
-        else if (yokoDigit === "2") { e.preventDefault(); state.yokogeta = "あり"; sel.value = "あり"; }
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          if (e.key === "1") { e.preventDefault(); state.yokogeta = "なし"; sel.value = "なし"; }
+          else if (e.key === "2") { e.preventDefault(); state.yokogeta = "あり"; sel.value = "あり"; }
+        }
       });
       break;
     }
@@ -2261,9 +2230,9 @@ function renderStep() {
           selectSakuseisha(allSakuseisha[next]);
           return;
         }
-        const sakuIdx = getShortcutIndex(e);
-        if (sakuIdx >= 0 && sakuIdx < allSakuseisha.length) {
-          e.preventDefault(); selectSakuseisha(allSakuseisha[sakuIdx]);
+        if (/^[0-9]$/.test(e.key) && e.code && (e.code.startsWith("Numpad") || e.code.startsWith("Digit"))) {
+          const idx = e.key === "0" ? 9 : Number(e.key) - 1;
+          if (idx < allSakuseisha.length) { e.preventDefault(); selectSakuseisha(allSakuseisha[idx]); }
         }
       });
       break;
@@ -2424,8 +2393,6 @@ function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
  * タップ時は goToStep(i) を呼び、入力チェック（trySave）や
  * ロック中の丸への移動禁止はすべて goToStep 側でまとめて行う。
  */
-const STEP_DOT_LABELS = ["機械", "加工全長", "加工長さ", "塩ビ選択", "アテ距離", "アテ選択", "トルク", "横ゲタ", "作成者", "出力"];
-
 function renderStepDots() {
   const maxIdx = computeMaxUnlockedIndex();
   if (stepIndex > maxIdx) stepIndex = maxIdx; // 念のための保険（本来は起こらない想定）
@@ -2436,11 +2403,7 @@ function renderStepDots() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "step-dot " + (i === stepIndex ? "current" : (locked ? "locked" : "done"));
-    const label = STEP_DOT_LABELS[i] || String(i + 1);
-    const labelHtml = label.length === 4
-      ? label.slice(0, 2) + "<br>" + label.slice(2) // 4文字ラベルは2行に分けて表示
-      : label; // 2〜3文字ラベルは1行のまま表示
-    btn.innerHTML = '<span class="step-dot-label">' + labelHtml + "</span>";
+    btn.textContent = String(i + 1);
     btn.disabled = locked;
     btn.setAttribute("aria-label", t("step", i + 1, TOTAL));
     btn.setAttribute("aria-current", i === stepIndex ? "step" : "false");
