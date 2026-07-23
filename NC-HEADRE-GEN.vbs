@@ -1,164 +1,549 @@
-﻿Option Explicit
+Option Explicit
 
 Const APP_NAME = "NC-HEADRE-GEN"
-Const WINDOW_TITLE = "NCヘッダージェネレーター"
 Const HTML_FILE_NAME = "index.html"
 Const ICON_FILE_NAME = "appicon.png"
+Const REQUIRED_WIDTH = 624
+Const REQUIRED_HEIGHT = 980
 
-Dim fso
+Dim appTitle
 Dim shell
-Dim scriptFolder
+Dim fso
+Dim appFolder
 Dim htmlPath
-Dim iconSource
-Dim processEnvironment
-Dim payload
-Dim decoderCommand
-Dim powerShellPath
-Dim command
-Dim exitCode
+Dim fileUrl
+Dim edgePath
+Dim iconSourcePath
+Dim lockPath
+Dim hasLaunchLock
+Dim waitCount
+Dim launchResult
+Dim launchedWindowFound
 
-Set fso = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
 
-scriptFolder = fso.GetParentFolderName(WScript.ScriptFullName)
-htmlPath = fso.BuildPath(scriptFolder, HTML_FILE_NAME)
-iconSource = fso.BuildPath(scriptFolder, ICON_FILE_NAME)
+appTitle = "NC" & _
+    ChrW(&H30D8) & ChrW(&H30C3) & ChrW(&H30C0) & ChrW(&H30FC) & _
+    ChrW(&H30B8) & ChrW(&H30A7) & ChrW(&H30CD) & ChrW(&H30EC) & _
+    ChrW(&H30FC) & ChrW(&H30BF) & ChrW(&H30FC)
 
-If Not fso.FileExists(htmlPath) Then
-    MsgBox _
-        "NAS上のHTMLファイルを確認できないため、NC-HEADRE-GENを起動できません。" & vbCrLf & vbCrLf & _
-        "ネットワーク接続とNASへのアクセスを確認してから、もう一度お試しください。" & vbCrLf & _
-        "確認先：" & htmlPath, _
-        vbExclamation, _
-        APP_NAME
-    WScript.Quit 2
-End If
+Function UnicodeText(ByVal hexValues)
+    Dim values
+    Dim value
+    Dim result
 
-Set processEnvironment = shell.Environment("Process")
-processEnvironment("NC_HEADRE_HTML") = htmlPath
-processEnvironment("NC_HEADRE_LAUNCHER") = WScript.ScriptFullName
-processEnvironment("NC_HEADRE_APP_NAME") = APP_NAME
-processEnvironment("NC_HEADRE_WINDOW_TITLE") = WINDOW_TITLE
-processEnvironment("NC_HEADRE_ICON_SOURCE") = iconSource
+    values = Split(hexValues, " ")
+    result = ""
 
-payload = ""
-payload = payload & "H4sIAAAAAAACA8U7bW8bx5nf+SsGDg8ka5KhZcdIFAgwTVEWLxKlE+moOVlwV8sROeflzmZ2aEkNDGipvDh1XANpmsBp2jS5"
-payload = payload & "NHbjnpwrkFZnp8mP2VBSPvUvHOZld2d2l7QdG6g+iNydmef9eeZ5nhlm64RgUjUpwvYygZuQQNuEYAbkWhQ7uUwm26N9a9mg"
-payload = payload & "PTADstC+Ot2sXZ6vV2dX6pfn24sLmaxlDGyzB0n6nIXqxWZtvr6SyRqO0zT6MDmlurx8uVldrGeyW8ju4K02olbKtNVGc3Zp"
-payload = payload & "9XK70V6oZ7LIxHYLD4iZMrNRW2pebi1dXKnVMxm0CfJrLiXI7q5PTzfc5sCylshqD1HYcgwT5kMGC6CESQYAACbPVxl+3DWS"
-payload = payload & "+cedrgiiUABv8BVwG1EwVclcy2SqnU6pveNAwP/Pwk1kI6ZAcC6XGbjI7oLWjkth/2XtqbwysCnqw3LDppBgpwXJVWRCNzar"
-payload = payload & "Dbfpy5mMM9iwkAlcalBkAtMyXBc0DYquwlVOnKRKTutAC3YNCsEGxhao24O+mOUuE2zmGzZdpgT0Vu1OEcgHa9kgRr/wckaI"
-payload = payload & "o0XJwKQLxg4e0Lz4eAXZnXILvj6ANkWGVVhXEbp8PlheajTbkhRlFNkU/PzltLevibfXng7tSr02BusC3KSpiNvYSX2/grq9"
-payload = payload & "9BXnMaW4/6T0FkGtZ5AWpGAm+FauDihO5WNxqdloL600mnNL6eyYGy30S5ggj/NPzEVsI4rJuOFVTK4kxgYMbGdrzjK6rs7b"
-payload = payload & "rGU1+g4mNH9i4EJyeqrcsawTcbq5OcJtCoktjK0FKTMy6LqzDqpuGQTa0HVr2KZwmwam13GQfBNa3E9Ep9h2PmbnwDQsa8Mw"
-payload = payload & "r4wz8p+IsuEKJK8iF21YUHWnR4BOM4aLNjJxB07CylR0AVKBlcWDBWh3ae9fgFgPHS0eM88PkNWBBDBtFvmSvrFdwwP7aXQ7"
-payload = payload & "0FH3CDQ60qwaHZ0KPKBiuhOMP62CWz28JRBX3R07Fi+5G+J+37CfHg+kc5jALsEDuyMQPoFOHwn+PNOOFCBuY+dZwm4FqlnG"
-payload = payload & "bj6MKaqg4i+R7UJCq5sUkmiMCXNbf9zRH7dQh/b0Vz3IYnT0jit/kwUw/uopWJOkyjg6R3A/qZWigu+ZolrGyKZ5sYM67PsT"
-payload = payload & "YHrcXSahxwuQShIa9iYO+OyLV0VA4Ka2KSF7Ez+t6VyAtDYgLibMdJjzKiw/g4gx66A5TJ69N81ClxK80zCxHYJlD4WXM9cy"
-payload = payload & "uXOZzHOgutzwvTuj7z7yhzdGD+4c3r3tD9/3dz1/73N/74Y//N7f+9b3PvC9u763Lzeq48/uHn3xYLR78+jX7/jevdH970bf"
-payload = payload & "f+J7H/nep6P9T/29D/zhfX/40N+753sHvvd7f3jT9677wxv+7jBDyY7ME9auYtRZX1MzwvXp6cl78ZpgYz1fOlMoZK4B06Bm"
-payload = payload & "T8J7DoxufeF7b0oqfe+O7933vd/43v7he++M9j/2h+//8I/vGSneV773pu996g89f9f7cffj0cGB7+0LARzfvX60/5HvHfy4"
-payload = payload & "+1d/uMuIvpbJbA5sXuEwfZXqnS7kxYrAnCWwi1xKdl6BOy6YAeei8JJbkUPT0/Ov1F+7vLBUqy5cXqzW5hvN+qXW0lx7tbpS"
-payload = payload & "v7SITIJdvEkvSeov1QaEQJu+ComLsH2p6jiAYXQv9V3Y6cIy3Ia54pOiWV1aPXvm9FQTd+AzR1m7uLJSb7YvX2zVV56WMREU"
-payload = payload & "hfFvYgINswfy2StwByBbl3ZBSToj0wr+slcNa8DKuzzTWoPCPigtIAqJIepRBrJQvgDpq2xePpcraMtZ4SdBlAy7A/Jt6NIS"
-payload = payload & "X6mDkXPYAy+qFqCxWSjEiGF/BNIBseUCbfRa+KRbdfD3HDj8y2fMRndvH//3J/7w/aPPHxx/ddP3bkvH0gHJjDh7xcZbNpcv"
-payload = payload & "t8tCTKQEY8pkei6ffYNVwMsEd4nRn0MWdPPbL54tXCuK0lgdkK+4jVWXl2er7arGLBcbgxyXgErNyRnw7xjZQpqCjlxkLMzB"
-payload = payload & "mGlYyDSY1yWMQ+VUZ8lhAJmZRMgSxPE5k1UqpkzWaKBNNneM/GXaBWZ43KjJp5zCDigp/RPQQha0qbXDAh6ypY1wmoMETqEh"
-payload = payload & "wC+HyqKboUglmGAPLEsLYnPI7pSqjqMV4lnXJMih031mflBmd2AGBEF3evo/IcGSL1mnsGE1gp+MFTTralHIKpkwhGd7ht2x"
-payload = payload & "YDEEnx3YAxd2pNsHfJdsTEF8k4iXMxLWWAVRonjbtQhB1uJVSZyJ9enptNolwKLbkgRRsiCoPDF+tqmBGdCEW6Wljf+CJlVb"
-payload = payload & "KGW9WAlRnQSnIhrSd1G9AgpFnRUFD/8o1wzHMBHdifHDx9pY4M4XQMmGQOsmPSGPayzLOT21ng1rHTADKo9Nf6yMiqyGwE0F"
-payload = payload & "ZmHSLiBnMTVL8c4io2tjlyLTLUvgAqt8OL/T6OTXkE1TUURxRIwFIHhzsoTg64GD59L2gHFuJlkbu2dsGpb7pHvG0TfDHx68"
-payload = payload & "/ePuBz8c/I/v7R998PDH33/ue/dH9787/t/PfO8eT9t4NpTYQlKVG3RaUrWmNjayUSdDjx8FLTKlySKRbsl0nzWDqgQaQd9Q"
-payload = payload & "DydykgwfWZb2656lhSmlQojml0WvitnJmEZnedEgbs+wWKKKfgmXNvN8YSEzMVzFKpaA1MCIOQQtkekRvAVyeg6+L9PuW/eP"
-payload = payload & "9/5xdP/N0e/+6g/fH936kCXvLNe96Xvf+d7v/OFv+CNLx/3dYS5lO+C8iuaaJusWpNGmsIxd0RFWpR25bSD2eeGP0QCrPNaz"
-payload = payload & "DbcJZUNCTeayNjQIdANxgBkwFe1wyhpVGlmTl14TlMmrMS2KpWggKuCE1AXUxJaR7YekxYEkCl8Joxhnq6D4JbRc+JNQyHIw"
-payload = payload & "EPAEHJlUTM8Qi3T658DhJ7ujr2+N3vvQ33vIvn9xh3339n3vz773mT981x8ORTUljNX3Dg6vP2Q5qowuY2q+WPMqpOYlgb9F"
-payload = payload & "DUJLLQtCB5QWkWUhF5rY7rjg1FRFGtYWJldklhUPF8GLUCTRilXWqmGxlz2UeSMdlOQT68NHM+d5ByecKjrr4dw2dkIZffj1"
-payload = payload & "8Ze3wkjr73qjt66LMpmFXM2nD47uPOSe+qXv3WDi2/VYveztp7u+qLgjp1dT/4ke5BC8AQNe1xYN2mNWgOz8mUqlqEiiEFsS"
-payload = payload & "Mp2+Rgw/KhdJ77txJPHgoUYWsVvoY5FiwEnwYtpYGzspQxH/aQPzseYc+6tsVypnoiwl4nGCLZ6taKl/x0HpiaXW7pEyiHYQ"
-payload = payload & "vi6RTUpoL53VHZKdnz5fa7WE+RztfzR654EI/acqlX8TZnN4e8jqxu/fOv7S84ff+MMv/OGDf357ndVYoy8+PPzDH4+/+9b3"
-payload = payload & "vv/nt+8GxpQl8PUBImxD7tBelZ6qVMAMODt1Rh8VgguGX3qxEpQRhgU7KyoIxYRWWOc4n4bhZ4LL58FLZwtpkBLWGAOlkpOE"
-payload = payload & "1Te246TMWRiTvBIIfgYq5Zei+QmEygI5JlfIOJHiYWnSKEbUSGS9NEdLZb+oUCYXb4dRSXqGTq7KYEkSWQDPgym5fCdcLpwn"
-payload = payload & "bbXkthRQKtdnntTrk+nCGG/PKi32rNJfz8aa69l4Z11x3ELgJT8c7B7eHh59/Kbv3WPb1rs3eWw+kM6y640ODg5vD5Whe7x1"
-payload = payload & "GEuNnwmj+dKpgkLtk3zdrlQqp0BpAxPxfSr6HnL8DOmc+tfQmTgC0iLkWN4Sp1LhMjXDZRlk1XFYE3xMXisvVWRFL6WYHGBN"
-payload = payload & "dWTzrpRqZWHyP7ajJO+aTOgpJSs9Gej1mja6u1F1XdjfsHZ44RmUtsTYQnZX2Tkigucw7yTMgJZjoYDIZdZjpyDB2ONxlYQe"
-payload = payload & "MciaWAayYTLLFmrMM3WIriz7z9fMIgJNiskOKI1FMIeJCQupDRWXC7nRN7r8Vg9vfIWDG4j2DSf5vksMp4dMNznC7ggl37qU"
-payload = payload & "QKOfPltYXXrXbEx7Qqd5Tddjmb9n4Zhg3n7NS0PS2xERb8leUgDpvJgy9cLZoviXT8PFPpfRNrTmMOkblGHmX05PbThOlXQ3"
-payload = payload & "YogV4cXBXZBDknrOSV5SOgZKuWZBgyQIq2ELM1G2iWG7DjfYcQB4xe5gi1vMIu6kyVR+Ts0mZ69PT8+jbu8/BoaF6M55ZA42"
-payload = payload & "kBnTF9uWY3v11AtnwfOaKstyq08ZiefNwk2JsZVI0Y3t/KliPN9JIGHZDieqkAIzmcM/EmiY24yH+vNEVsRFUFL4UHIMbelr"
-payload = payload & "E5fOq/lFuoaZ9qQtKVQXJWHy87WiQkpRg62D1ZxWGic7EppnA/mUyWk+amJbGrkAlVfAxkCEwSMA0lgqM79en55ecqCdV+Nw"
-payload = payload & "MT5JWmiNQIPCFNrKLeMqEwvHobYhNpFtWFY89PB6Q04GbwS0lWeR62AX5gtKJzCcztDwyRzfI6dK0bIucqwPCN4Ys5urx9aq"
-payload = payload & "HNNQBEbBKYosZBJVMv6wBVLbE6crJiZkpDhK2sJE83Ts1qkoOp4VZNKbuiuwj6/CtINMDRbfHx/jXGlczhHPmGahe4Vip9XD"
-payload = payload & "hJoD2thcRC6/76k1YoMEKTgcD6qijljNLL5uX0UE231oU1EKix2dzc7nJJZcUPtJbPJSsHJYGAAM78SCkyBXtuwruaiKHidz"
-payload = payload & "FWoy9dLqdwubhsWMMMyaFBriB6AgoCW2Nkl9HKzOBTJxIICBC4NUdUbVzyT2lDvNMYtSewkEdqENCbtsOwMmp3c6I2lWqqWJ"
-payload = payload & "CuhEY1XDOu5APmKgUF4wXLpKEIVt1IcXqQlKXZo4HRkHSCM8CSvFXcWx9Xj6NX2ohURJSlyTvuqQOjGPaA7rao+dqmnNn2a1"
-payload = payload & "xRqsv/7T0d8+Dk4AWL169Ku/Hb51g70ZDnlHkV2B8Yd/9/fusHbi3nV/eM/f2/P3rh+/89Xxg3u+997hR386/OQvx1/9wffu"
-payload = payload & "HH52ffT2W3p3MfSbWniefe5E5hfhRXZ22z+r32svr0DHYlfRT+ROFMGJXO5EoZDLTDBeBVq67YrWmzxrAyW2H/KF+ci7fsEd"
-payload = payload & "k93zb6yAnNg7T09d2hLHTPy8vQBKVdIdsBi0gFwK8rkTOXBSxX4S5E7k2O0iRT1jaq5lAl1oU1GdEKMPWbNELVTl9i1PxcqL"
-payload = payload & "0HWNLjyPt2XbW7kpNE6d4T2lZq0kfp5QulBv+sP3j7/5++jGb+NnP7tDf++mUK+/d58pfHg/AHpX4ODm8Lm8pTX8P+Uyid6K"
-payload = payload & "Hg597+0fDnZHD770vV8d//lLPuGW7/3R934rGiPqhSCNPmVgvBDODyjlmdPSK48zPSiFVg1iByUuq+9PnBNGCm12O7gT2eha"
-payload = payload & "DdtXIWGbTRufN1x49ow8117jB+x1tkD8hkJeLWaZ3/kdCt183OQLwX7m9qBl6YUWu9ghv662hKm12Czdd5g/88Vlkb8F+2le"
-payload = payload & "35X0ReW2QbowZRdMNfTg5gXegoRTcOnqqXLlksOeBerwBk2EIXAHVsLlSk28TPAmYjmbgNaiOxYE86jTgTYo1XUZM9eJyT0G"
-payload = payload & "nR3DILsb1fXp3Qc1dMQgzELhvoiHxFzcDUZfD48+uBscuNz58cMbgT/czkVd9SisalthiISNLGBx24gpSt/4ToJcsZIbc9A2"
-payload = payload & "FkZ4TVBdHmOOJ+y8SZXtDyjcTr8Nwm9BsEpjkc3Ji2ygCHIMm3Up+t3ShXoz/L1UrpDJ4i3bXZRgZQoRNSD0VoQ+l9NSXjUQ"
-payload = payload & "XbJh/nSlUqnoSelagrTqhmF3sA07HEh924RcZetjcSiXCvQkIpylqor/eOnUlLoFPro7Ff7ybELXTfwqSkv9YKC4Ge26Z4zM"
-payload = payload & "YFaSSu0gaGIGHV0lDcGFhwnyXoh+V0veVogO+pLJYbC0BF9P1lxKt0qHoWUaLCe9SFiUy69dJGg9+oVbubrhYmtA4UWCYodi"
-payload = payload & "yZ05EmR8zy2VDMeZ4dFDoFKufWU70OhYyOY9lllD5GwsRFOzibfK1U6nJY7c8lOVKAft4FgmNeGk7oVK7OhwgqyF0W/1WESc"
-payload = payload & "IFpxnTBJLihZNOKoEDffx9OVsKpT6uL0uxolWW6HYJUTYU3j0e8BK7Fr1OGPBGM9A05tqmfyOBKEjBVoQcOFIk4VohpWu60p"
-payload = payload & "54blc+Za5v8BobYsiEY6AAA="
-processEnvironment("NC_HEADRE_PS_PAYLOAD") = payload
+    For Each value In values
+        result = result & ChrW(CLng("&H" & value))
+    Next
 
-decoderCommand = _
-    "$bytes=[Convert]::FromBase64String($env:NC_HEADRE_PS_PAYLOAD);" & _
-    "$input=New-Object IO.MemoryStream(,$bytes);" & _
-    "$gzip=New-Object IO.Compression.GzipStream($input,[IO.Compression.CompressionMode]::Decompress);" & _
-    "$reader=New-Object IO.StreamReader($gzip,[Text.Encoding]::UTF8);" & _
-    "& ([ScriptBlock]::Create($reader.ReadToEnd()))"
-
-powerShellPath = shell.ExpandEnvironmentStrings( _
-    "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" _
-)
-command = QuoteArgument(powerShellPath) & _
-    " -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command " & _
-    QuoteArgument(decoderCommand)
-
-exitCode = shell.Run(command, 0, True)
-
-Select Case exitCode
-    Case 0
-        ' 正常終了。
-    Case 2
-        MsgBox _
-            "NAS上のHTMLファイルを確認できないため、NC-HEADRE-GENを起動できません。" & vbCrLf & vbCrLf & _
-            "ネットワーク接続とNASへのアクセスを確認してから、もう一度お試しください。", _
-            vbExclamation, _
-            APP_NAME
-    Case 10
-        MsgBox _
-            "Microsoft Edgeが見つかりませんでした。" & vbCrLf & vbCrLf & _
-            "Edgeが利用できる状態か確認してください。", _
-            vbExclamation, _
-            APP_NAME
-    Case 11
-        MsgBox _
-            "Edgeは起動しましたが、NC-HEADRE-GENの画面を確認できませんでした。" & vbCrLf & vbCrLf & _
-            "少し待ってから、もう一度お試しください。", _
-            vbExclamation, _
-            APP_NAME
-    Case 12
-        MsgBox _
-            "NC-HEADRE-GENの起動処理が続いています。" & vbCrLf & vbCrLf & _
-            "少し待ってから、もう一度お試しください。", _
-            vbInformation, _
-            APP_NAME
-    Case Else
-        MsgBox _
-            "NC-HEADRE-GENの起動中に問題が発生しました。" & vbCrLf & vbCrLf & _
-            "ネットワーク接続とMicrosoft Edgeを確認してから、もう一度お試しください。", _
-            vbExclamation, _
-            APP_NAME
-End Select
+    UnicodeText = result
+End Function
 
 Function QuoteArgument(ByVal value)
     QuoteArgument = Chr(34) & Replace(value, Chr(34), Chr(34) & Chr(34)) & Chr(34)
 End Function
+
+Sub AddScriptLine(ByRef scriptText, ByVal lineText)
+    scriptText = scriptText & lineText & vbCrLf
+End Sub
+
+Function FindEdgePath()
+    Dim candidate
+
+    FindEdgePath = ""
+
+    candidate = shell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & _
+        "\Microsoft\Edge\Application\msedge.exe"
+    If fso.FileExists(candidate) Then
+        FindEdgePath = candidate
+        Exit Function
+    End If
+
+    candidate = shell.ExpandEnvironmentStrings("%ProgramFiles%") & _
+        "\Microsoft\Edge\Application\msedge.exe"
+    If fso.FileExists(candidate) Then
+        FindEdgePath = candidate
+        Exit Function
+    End If
+
+    candidate = shell.ExpandEnvironmentStrings("%LOCALAPPDATA%") & _
+        "\Microsoft\Edge\Application\msedge.exe"
+    If fso.FileExists(candidate) Then
+        FindEdgePath = candidate
+    End If
+End Function
+
+Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
+    Dim tempFolder
+    Dim tempPsPath
+    Dim psFile
+    Dim psScript
+    Dim powerShellPath
+    Dim command
+    Dim exitCode
+
+    RestoreAndPositionEdgeWindow = False
+    tempFolder = shell.ExpandEnvironmentStrings("%TEMP%")
+    tempPsPath = fso.BuildPath(tempFolder, fso.GetTempName & ".ps1")
+    powerShellPath = shell.ExpandEnvironmentStrings( _
+        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe")
+
+    psScript = ""
+    AddScriptLine psScript, "param("
+    AddScriptLine psScript, "    [string]$WindowTitle,"
+    AddScriptLine psScript, "    [int]$UseCursorMonitor,"
+    AddScriptLine psScript, "    [int]$RequiredWidth,"
+    AddScriptLine psScript, "    [int]$RequiredHeight"
+    AddScriptLine psScript, ")"
+    AddScriptLine psScript, "$ErrorActionPreference = 'Stop'"
+    AddScriptLine psScript, "$process = Get-Process msedge -ErrorAction SilentlyContinue |"
+    AddScriptLine psScript, "    Where-Object {"
+    AddScriptLine psScript, "        $_.MainWindowTitle.StartsWith("
+    AddScriptLine psScript, "            $WindowTitle,"
+    AddScriptLine psScript, "            [System.StringComparison]::OrdinalIgnoreCase"
+    AddScriptLine psScript, "        )"
+    AddScriptLine psScript, "    } | Select-Object -First 1"
+    AddScriptLine psScript, "if ($null -eq $process) { exit 1 }"
+    AddScriptLine psScript, "$process.Refresh()"
+    AddScriptLine psScript, "$windowHandle = $process.MainWindowHandle"
+    AddScriptLine psScript, "if ($windowHandle -eq [System.IntPtr]::Zero) { exit 1 }"
+    AddScriptLine psScript, "$memberDefinition = @'"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool SetProcessDpiAwarenessContext(System.IntPtr value);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool IsIconic(System.IntPtr hWnd);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool IsZoomed(System.IntPtr hWnd);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool ShowWindowAsync(System.IntPtr hWnd, int command);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool SetForegroundWindow(System.IntPtr hWnd);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool BringWindowToTop(System.IntPtr hWnd);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.StructLayout("
+    AddScriptLine psScript, "    System.Runtime.InteropServices.LayoutKind.Sequential)]"
+    AddScriptLine psScript, "public struct POINT { public int X; public int Y; }"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.StructLayout("
+    AddScriptLine psScript, "    System.Runtime.InteropServices.LayoutKind.Sequential)]"
+    AddScriptLine psScript, "public struct RECT {"
+    AddScriptLine psScript, "    public int Left; public int Top; public int Right; public int Bottom;"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.StructLayout("
+    AddScriptLine psScript, "    System.Runtime.InteropServices.LayoutKind.Sequential)]"
+    AddScriptLine psScript, "public struct MONITORINFO {"
+    AddScriptLine psScript, "    public int cbSize; public RECT rcMonitor; public RECT rcWork;"
+    AddScriptLine psScript, "    public int dwFlags;"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern System.IntPtr MonitorFromWindow("
+    AddScriptLine psScript, "    System.IntPtr hWnd, uint flags);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern System.IntPtr MonitorFromPoint("
+    AddScriptLine psScript, "    POINT point, uint flags);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool GetCursorPos(out POINT point);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"","
+    AddScriptLine psScript, "    CharSet=System.Runtime.InteropServices.CharSet.Auto)]"
+    AddScriptLine psScript, "public static extern bool GetMonitorInfo("
+    AddScriptLine psScript, "    System.IntPtr monitor, ref MONITORINFO info);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern uint GetDpiForWindow(System.IntPtr hWnd);"
+    AddScriptLine psScript, "[System.Runtime.InteropServices.DllImport(""user32.dll"")]"
+    AddScriptLine psScript, "public static extern bool SetWindowPos("
+    AddScriptLine psScript, "    System.IntPtr hWnd, System.IntPtr insertAfter,"
+    AddScriptLine psScript, "    int x, int y, int width, int height, uint flags);"
+    AddScriptLine psScript, "'@"
+    AddScriptLine psScript, "Add-Type -Name NativeMethods -Namespace NcLauncher -MemberDefinition $memberDefinition"
+    AddScriptLine psScript, "try {"
+    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::SetProcessDpiAwarenessContext("
+    AddScriptLine psScript, "        [System.IntPtr](-4))"
+    AddScriptLine psScript, "} catch { }"
+    AddScriptLine psScript, "if ([NcLauncher.NativeMethods]::IsIconic($windowHandle) -or [NcLauncher.NativeMethods]::IsZoomed($windowHandle)) {"
+    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 9)"
+    AddScriptLine psScript, "    Start-Sleep -Milliseconds 120"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "$nearestMonitor = 2"
+    AddScriptLine psScript, "if ($UseCursorMonitor -eq 1) {"
+    AddScriptLine psScript, "    $cursor = New-Object 'NcLauncher.NativeMethods+POINT'"
+    AddScriptLine psScript, "    if ([NcLauncher.NativeMethods]::GetCursorPos([ref]$cursor)) {"
+    AddScriptLine psScript, "        $monitor = [NcLauncher.NativeMethods]::MonitorFromPoint("
+    AddScriptLine psScript, "            $cursor, $nearestMonitor)"
+    AddScriptLine psScript, "    } else {"
+    AddScriptLine psScript, "        $monitor = [NcLauncher.NativeMethods]::MonitorFromWindow("
+    AddScriptLine psScript, "            $windowHandle, $nearestMonitor)"
+    AddScriptLine psScript, "    }"
+    AddScriptLine psScript, "} else {"
+    AddScriptLine psScript, "    $monitor = [NcLauncher.NativeMethods]::MonitorFromWindow("
+    AddScriptLine psScript, "        $windowHandle, $nearestMonitor)"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "$monitorInfo = New-Object 'NcLauncher.NativeMethods+MONITORINFO'"
+    AddScriptLine psScript, "$monitorInfo.cbSize = [System.Runtime.InteropServices.Marshal]::SizeOf($monitorInfo)"
+    AddScriptLine psScript, "if (-not [NcLauncher.NativeMethods]::GetMonitorInfo("
+    AddScriptLine psScript, "    $monitor, [ref]$monitorInfo)) { exit 2 }"
+    AddScriptLine psScript, "$workWidth = $monitorInfo.rcWork.Right - $monitorInfo.rcWork.Left"
+    AddScriptLine psScript, "$workHeight = $monitorInfo.rcWork.Bottom - $monitorInfo.rcWork.Top"
+    AddScriptLine psScript, "if ($UseCursorMonitor -eq 1) {"
+    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::SetWindowPos("
+    AddScriptLine psScript, "        $windowHandle, [System.IntPtr]::Zero,"
+    AddScriptLine psScript, "        $monitorInfo.rcWork.Left + 8, $monitorInfo.rcWork.Top + 8,"
+    AddScriptLine psScript, "        [Math]::Min(400, $workWidth), [Math]::Min(400, $workHeight), 68)"
+    AddScriptLine psScript, "    Start-Sleep -Milliseconds 160"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "$dpi = [NcLauncher.NativeMethods]::GetDpiForWindow($windowHandle)"
+    AddScriptLine psScript, "if ($dpi -le 0) { $dpi = 96 }"
+    AddScriptLine psScript, "$scaledWidth = [int][Math]::Round($RequiredWidth * $dpi / 96)"
+    AddScriptLine psScript, "$scaledHeight = [int][Math]::Round($RequiredHeight * $dpi / 96)"
+    AddScriptLine psScript, "$targetWidth = [Math]::Min("
+    AddScriptLine psScript, "    $scaledWidth, [int][Math]::Floor($workWidth * 0.90))"
+    AddScriptLine psScript, "$targetHeight = [Math]::Min("
+    AddScriptLine psScript, "    $scaledHeight, [int][Math]::Floor($workHeight * 0.90))"
+    AddScriptLine psScript, "$centerX = $monitorInfo.rcWork.Left + [int](($workWidth - $targetWidth) / 2)"
+    AddScriptLine psScript, "$centerY = $monitorInfo.rcWork.Top + [int](($workHeight - $targetHeight) / 2)"
+    AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::SetWindowPos("
+    AddScriptLine psScript, "    $windowHandle, [System.IntPtr]::Zero,"
+    AddScriptLine psScript, "    $centerX, $centerY, $targetWidth, $targetHeight, 68)"
+    AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::BringWindowToTop($windowHandle)"
+    AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::SetForegroundWindow($windowHandle)"
+    AddScriptLine psScript, "exit 0"
+
+    On Error Resume Next
+    Set psFile = fso.CreateTextFile(tempPsPath, True, False)
+
+    If Err.Number = 0 Then
+        psFile.Write psScript
+        psFile.Close
+
+        command = QuoteArgument(powerShellPath) & _
+            " -NoProfile -NonInteractive -ExecutionPolicy Bypass" & _
+            " -WindowStyle Hidden -File " & QuoteArgument(tempPsPath) & _
+            " " & QuoteArgument(windowTitle) & _
+            " " & CStr(Abs(CInt(useCursorMonitor))) & _
+            " " & CStr(REQUIRED_WIDTH) & _
+            " " & CStr(REQUIRED_HEIGHT)
+
+        Err.Clear
+        exitCode = shell.Run(command, 0, True)
+        If Err.Number = 0 And exitCode = 0 Then
+            RestoreAndPositionEdgeWindow = True
+        End If
+    End If
+
+    Err.Clear
+    If fso.FileExists(tempPsPath) Then
+        fso.DeleteFile tempPsPath, True
+    End If
+    On Error GoTo 0
+End Function
+
+Function AcquireLaunchLock(ByVal folderPath)
+    Dim lockFolder
+
+    AcquireLaunchLock = False
+    On Error Resume Next
+
+    If fso.FolderExists(folderPath) Then
+        Set lockFolder = fso.GetFolder(folderPath)
+        If DateDiff("s", lockFolder.DateCreated, Now) > 20 Then
+            fso.DeleteFolder folderPath, True
+        End If
+    End If
+
+    Err.Clear
+    fso.CreateFolder folderPath
+    If Err.Number = 0 Then
+        AcquireLaunchLock = True
+    End If
+
+    On Error GoTo 0
+End Function
+
+Sub ReleaseLaunchLock(ByVal folderPath)
+    On Error Resume Next
+    If fso.FolderExists(folderPath) Then
+        fso.DeleteFolder folderPath, True
+    End If
+    On Error GoTo 0
+End Sub
+
+Function CreateShortcutIcon(ByVal sourcePngPath, ByVal destinationIconPath)
+    Dim tempFolder
+    Dim tempPsPath
+    Dim psFile
+    Dim psScript
+    Dim powerShellPath
+    Dim command
+    Dim exitCode
+
+    CreateShortcutIcon = False
+    If Not fso.FileExists(sourcePngPath) Then
+        Exit Function
+    End If
+
+    tempFolder = shell.ExpandEnvironmentStrings("%TEMP%")
+    tempPsPath = fso.BuildPath(tempFolder, fso.GetTempName & ".ps1")
+    powerShellPath = shell.ExpandEnvironmentStrings( _
+        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe")
+
+    psScript = ""
+    AddScriptLine psScript, "param([string]$SourcePng, [string]$DestinationIco)"
+    AddScriptLine psScript, "$ErrorActionPreference = 'Stop'"
+    AddScriptLine psScript, "Add-Type -AssemblyName System.Drawing"
+    AddScriptLine psScript, "$source = $null"
+    AddScriptLine psScript, "$canvas = $null"
+    AddScriptLine psScript, "$graphics = $null"
+    AddScriptLine psScript, "$icon = $null"
+    AddScriptLine psScript, "$stream = $null"
+    AddScriptLine psScript, "try {"
+    AddScriptLine psScript, "    $source = [System.Drawing.Image]::FromFile($SourcePng)"
+    AddScriptLine psScript, "    $canvas = New-Object System.Drawing.Bitmap 256, 256"
+    AddScriptLine psScript, "    $graphics = [System.Drawing.Graphics]::FromImage($canvas)"
+    AddScriptLine psScript, "    $graphics.Clear([System.Drawing.Color]::Transparent)"
+    AddScriptLine psScript, "    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic"
+    AddScriptLine psScript, "    $scale = [Math]::Min(256 / $source.Width, 256 / $source.Height)"
+    AddScriptLine psScript, "    $width = [Math]::Max(1, [int][Math]::Round($source.Width * $scale))"
+    AddScriptLine psScript, "    $height = [Math]::Max(1, [int][Math]::Round($source.Height * $scale))"
+    AddScriptLine psScript, "    $x = [int][Math]::Floor((256 - $width) / 2)"
+    AddScriptLine psScript, "    $y = [int][Math]::Floor((256 - $height) / 2)"
+    AddScriptLine psScript, "    $graphics.DrawImage($source, $x, $y, $width, $height)"
+    AddScriptLine psScript, "    $icon = [System.Drawing.Icon]::FromHandle($canvas.GetHicon())"
+    AddScriptLine psScript, "    $stream = [System.IO.File]::Open("
+    AddScriptLine psScript, "        $DestinationIco, [System.IO.FileMode]::Create)"
+    AddScriptLine psScript, "    $icon.Save($stream)"
+    AddScriptLine psScript, "} finally {"
+    AddScriptLine psScript, "    if ($stream) { $stream.Dispose() }"
+    AddScriptLine psScript, "    if ($icon) { $icon.Dispose() }"
+    AddScriptLine psScript, "    if ($graphics) { $graphics.Dispose() }"
+    AddScriptLine psScript, "    if ($canvas) { $canvas.Dispose() }"
+    AddScriptLine psScript, "    if ($source) { $source.Dispose() }"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "if (Test-Path -LiteralPath $DestinationIco) { exit 0 }"
+    AddScriptLine psScript, "exit 1"
+
+    On Error Resume Next
+    Set psFile = fso.CreateTextFile(tempPsPath, True, False)
+
+    If Err.Number = 0 Then
+        psFile.Write psScript
+        psFile.Close
+
+        command = QuoteArgument(powerShellPath) & _
+            " -NoProfile -NonInteractive -ExecutionPolicy Bypass" & _
+            " -WindowStyle Hidden -File " & QuoteArgument(tempPsPath) & _
+            " " & QuoteArgument(sourcePngPath) & _
+            " " & QuoteArgument(destinationIconPath)
+
+        Err.Clear
+        exitCode = shell.Run(command, 0, True)
+        If Err.Number = 0 And exitCode = 0 And _
+            fso.FileExists(destinationIconPath) Then
+            CreateShortcutIcon = True
+        End If
+    End If
+
+    Err.Clear
+    If fso.FileExists(tempPsPath) Then
+        fso.DeleteFile tempPsPath, True
+    End If
+    On Error GoTo 0
+End Function
+
+Sub EnsureDesktopShortcut( _
+    ByVal scriptPath, _
+    ByVal workingFolder, _
+    ByVal sourcePngPath, _
+    ByVal edgeExecutable)
+
+    Dim desktopFolder
+    Dim shortcutPath
+    Dim iconFolder
+    Dim iconPath
+    Dim launcher
+    Dim wscriptPath
+
+    On Error Resume Next
+
+    desktopFolder = shell.SpecialFolders("Desktop")
+    shortcutPath = fso.BuildPath(desktopFolder, APP_NAME & ".lnk")
+
+    If fso.FileExists(shortcutPath) Then
+        On Error GoTo 0
+        Exit Sub
+    End If
+
+    iconFolder = fso.BuildPath( _
+        shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
+    If Not fso.FolderExists(iconFolder) Then
+        fso.CreateFolder iconFolder
+    End If
+
+    iconPath = fso.BuildPath(iconFolder, APP_NAME & ".ico")
+    If Not fso.FileExists(iconPath) Then
+        CreateShortcutIcon sourcePngPath, iconPath
+    End If
+
+    wscriptPath = fso.BuildPath( _
+        shell.ExpandEnvironmentStrings("%SystemRoot%"), "System32\wscript.exe")
+
+    Set launcher = shell.CreateShortcut(shortcutPath)
+    launcher.TargetPath = wscriptPath
+    launcher.Arguments = QuoteArgument(scriptPath)
+    launcher.WorkingDirectory = workingFolder
+    launcher.Description = UnicodeText( _
+        "4E 43 2D 48 45 41 44 52 45 2D 47 45 4E 3092 5C02 7528 " & _
+        "753B 9762 3067 958B 304D 307E 3059")
+
+    If fso.FileExists(iconPath) Then
+        launcher.IconLocation = iconPath & ",0"
+    ElseIf fso.FileExists(edgeExecutable) Then
+        launcher.IconLocation = edgeExecutable & ",0"
+    End If
+
+    launcher.Save
+    On Error GoTo 0
+End Sub
+
+Sub ShowNasError(ByVal targetPath)
+    Dim message
+
+    message = _
+        UnicodeText( _
+            "4E 41 53 4E0A 306E 48 54 4D 4C 30D5 30A1 30A4 30EB " & _
+            "3092 78BA 8A8D 3067 304D 306A 3044 305F 3081 3001 " & _
+            "4E 43 2D 48 45 41 44 52 45 2D 47 45 4E 3092 8D77 " & _
+            "52D5 3067 304D 307E 305B 3093 3002") & vbCrLf & vbCrLf & _
+        UnicodeText( _
+            "30CD 30C3 30C8 30EF 30FC 30AF 63A5 7D9A 3068 4E 41 " & _
+            "53 3078 306E 30A2 30AF 30BB 30B9 3092 78BA 8A8D " & _
+            "3057 3066 304B 3089 3001 3082 3046 4E00 5EA6 304A " & _
+            "8A66 3057 304F 3060 3055 3044 3002") & vbCrLf & vbCrLf & _
+        UnicodeText("78BA 8A8D 5148 FF1A") & targetPath
+
+    MsgBox message, vbExclamation, APP_NAME
+End Sub
+
+Sub ShowEdgeNotFound()
+    Dim message
+
+    message = _
+        UnicodeText( _
+            "4D 69 63 72 6F 73 6F 66 74 20 45 64 67 65 304C " & _
+            "898B 3064 304B 308A 307E 305B 3093 3067 3057 305F 3002") & _
+        vbCrLf & vbCrLf & _
+        UnicodeText( _
+            "45 64 67 65 304C 5229 7528 3067 304D 308B 72B6 614B " & _
+            "304B 78BA 8A8D 3057 3066 304F 3060 3055 3044 3002")
+
+    MsgBox message, vbExclamation, APP_NAME
+End Sub
+
+Sub ShowWindowNotFound()
+    Dim message
+
+    message = _
+        UnicodeText( _
+            "4E 43 2D 48 45 41 44 52 45 2D 47 45 4E 306E 753B " & _
+            "9762 3092 78BA 8A8D 3067 304D 307E 305B 3093 3067 " & _
+            "3057 305F 3002") & vbCrLf & vbCrLf & _
+        UnicodeText( _
+            "5C11 3057 5F85 3063 3066 304B 3089 3001 3082 3046 " & _
+            "4E00 5EA6 304A 8A66 3057 304F 3060 3055 3044 3002")
+
+    MsgBox message, vbExclamation, APP_NAME
+End Sub
+
+appFolder = fso.GetParentFolderName(WScript.ScriptFullName)
+htmlPath = fso.GetAbsolutePathName( _
+    fso.BuildPath(appFolder, HTML_FILE_NAME))
+iconSourcePath = fso.BuildPath(appFolder, ICON_FILE_NAME)
+
+If Not fso.FileExists(htmlPath) Then
+    ShowNasError htmlPath
+    WScript.Quit 1
+End If
+
+edgePath = FindEdgePath()
+If Len(edgePath) = 0 Then
+    ShowEdgeNotFound
+    WScript.Quit 1
+End If
+
+EnsureDesktopShortcut _
+    WScript.ScriptFullName, appFolder, iconSourcePath, edgePath
+
+If RestoreAndPositionEdgeWindow(appTitle, False) Then
+    shell.AppActivate appTitle
+    WScript.Quit 0
+End If
+
+lockPath = fso.BuildPath( _
+    shell.ExpandEnvironmentStrings("%TEMP%"), _
+    "NC-HEADRE-GEN-launch.lock")
+hasLaunchLock = AcquireLaunchLock(lockPath)
+
+If Not hasLaunchLock Then
+    For waitCount = 1 To 40
+        WScript.Sleep 250
+        If Not fso.FolderExists(lockPath) Then
+            Exit For
+        End If
+    Next
+
+    If RestoreAndPositionEdgeWindow(appTitle, False) Then
+        shell.AppActivate appTitle
+        WScript.Quit 0
+    End If
+
+    hasLaunchLock = AcquireLaunchLock(lockPath)
+    If Not hasLaunchLock Then
+        WScript.Quit 0
+    End If
+End If
+
+If RestoreAndPositionEdgeWindow(appTitle, False) Then
+    ReleaseLaunchLock lockPath
+    shell.AppActivate appTitle
+    WScript.Quit 0
+End If
+
+If Left(htmlPath, 2) = "\\" Then
+    fileUrl = "file:" & Replace(htmlPath, "\", "/")
+Else
+    fileUrl = "file:///" & Replace(htmlPath, "\", "/")
+End If
+
+On Error Resume Next
+Err.Clear
+launchResult = shell.Run( _
+    QuoteArgument(edgePath) & " --app=" & QuoteArgument(fileUrl), _
+    1, _
+    False)
+
+If Err.Number <> 0 Then
+    On Error GoTo 0
+    ReleaseLaunchLock lockPath
+    ShowWindowNotFound
+    WScript.Quit 1
+End If
+On Error GoTo 0
+
+WScript.Sleep 1500
+launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, True)
+
+If Not launchedWindowFound Then
+    WScript.Sleep 2500
+    launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, True)
+End If
+
+ReleaseLaunchLock lockPath
+
+If launchedWindowFound Then
+    shell.AppActivate appTitle
+    WScript.Quit 0
+End If
+
+ShowWindowNotFound
+WScript.Quit 1
