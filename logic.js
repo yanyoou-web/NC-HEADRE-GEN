@@ -210,7 +210,7 @@ const Logic = (() => {
     "C-60-1": { takasa: 29, phi: 14 },
     "C-61-1": { takasa: 29.5, phi: 13 },
     "C-62-1": { takasa: 30, phi: 18 }, "C-62-2": { takasa: 30, phi: 23 }, "C-62-3": { takasa: 30, phi: 31.7 },
-    "C-63-1": { takasa: 30.5, phi: 15.5 }, "C-63-2": { takasa: 30.5, phi: 50.4 },
+    "C-63-1": { takasa: 30.5, phi: 15.5 }, "C-63-2": { takasa: 30.6, phi: 50.4 },
     "C-64-1": { takasa: 31, phi: 18 },
     "C-65-1": { takasa: 31.5, phi: 12 }, "C-65-2": { takasa: 31.5, phi: 13 },
     "C-66-1": { takasa: 32.5, phi: 16 },
