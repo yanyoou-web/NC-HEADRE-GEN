@@ -1216,6 +1216,32 @@ const I18N = {
     home_resume: "続きから再開する",
     home_start: "開始する",
     home_history: "生成履歴",
+    home_enbi_lookup: "塩ビゲタ検索",
+    home_ate_lookup: "アテ検索",
+
+    lookup_enbi_title: "塩ビゲタ検索",
+    lookup_ate_title: "アテ検索",
+    lookup_keyword_label: "番号で絞り込み",
+    lookup_enbi_example: "例：B-12、BA-3",
+    lookup_ate_example: "例：C-20",
+    lookup_height_min: "高さ（以上）",
+    lookup_height_max: "高さ（以下）",
+    lookup_no_selection: "指定なし",
+    lookup_width: "幅",
+    lookup_hole_phi: "穴Φ",
+    lookup_no_hole: "穴なし",
+    lookup_phi: "Φ",
+    lookup_clear: "絞り込みを解除",
+    lookup_back: "ホームに戻る",
+    lookup_col_number: "番号",
+    lookup_col_height: "高さ",
+    lookup_col_width: "幅",
+    lookup_col_hole_phi: "穴Φ",
+    lookup_col_hole_depth: "穴深さ",
+    lookup_none: "なし",
+    lookup_empty_enbi: "該当する塩ビゲタがありません",
+    lookup_empty_ate: "該当するアテがありません",
+    lookup_count: (count) => `${count}件を表示`,
 
     history_title: "生成履歴",
     history_back: "ホームに戻る",
@@ -1355,6 +1381,32 @@ const I18N = {
     home_resume: "Tiếp tục từ lần trước",
     home_start: "Bắt đầu",
     home_history: "Lịch sử đã tạo",
+    home_enbi_lookup: "Tra cứu đế nhựa PVC",
+    home_ate_lookup: "Tra cứu tấm đệm",
+
+    lookup_enbi_title: "Tra cứu đế nhựa PVC",
+    lookup_ate_title: "Tra cứu tấm đệm",
+    lookup_keyword_label: "Lọc theo số",
+    lookup_enbi_example: "Ví dụ: B-12, BA-3",
+    lookup_ate_example: "Ví dụ: C-20",
+    lookup_height_min: "Chiều cao (từ)",
+    lookup_height_max: "Chiều cao (đến)",
+    lookup_no_selection: "Không chọn",
+    lookup_width: "Chiều rộng",
+    lookup_hole_phi: "Lỗ Φ",
+    lookup_no_hole: "Không có lỗ",
+    lookup_phi: "Đường kính Φ",
+    lookup_clear: "Xóa bộ lọc",
+    lookup_back: "Quay lại trang chủ",
+    lookup_col_number: "Số",
+    lookup_col_height: "Chiều cao",
+    lookup_col_width: "Chiều rộng",
+    lookup_col_hole_phi: "Lỗ Φ",
+    lookup_col_hole_depth: "Độ sâu lỗ",
+    lookup_none: "Không có",
+    lookup_empty_enbi: "Không tìm thấy đế nhựa PVC phù hợp",
+    lookup_empty_ate: "Không tìm thấy tấm đệm phù hợp",
+    lookup_count: (count) => `Hiển thị ${count} mục`,
 
     history_title: "Lịch sử đã tạo",
     history_back: "Quay lại trang chủ",
@@ -2796,18 +2848,18 @@ function openLookup(type) {
   document.getElementById("lookupScreen").style.display = "flex";
 
   const isEnbi = type === "enbi";
-  document.getElementById("lookupTitle").textContent = isEnbi ? "塩ビゲタ検索" : "アテ検索";
+  document.getElementById("lookupTitle").textContent = isEnbi ? t("lookup_enbi_title") : t("lookup_ate_title");
 
-  let filters = '<label class="lookup-filter lookup-filter-wide"><span>番号で絞り込み</span>' +
-    '<input type="text" id="lookupKeyword" placeholder="' + (isEnbi ? "例：B-12、BA-3" : "例：C-20") + '"></label>' +
-    '<label class="lookup-filter"><span>高さ（以上）</span><input type="number" inputmode="decimal" id="lookupHeightMin" placeholder="指定なし"></label>' +
-    '<label class="lookup-filter"><span>高さ（以下）</span><input type="number" inputmode="decimal" id="lookupHeightMax" placeholder="指定なし"></label>';
+  let filters = '<label class="lookup-filter lookup-filter-wide"><span>' + t("lookup_keyword_label") + '</span>' +
+    '<input type="text" id="lookupKeyword" placeholder="' + (isEnbi ? t("lookup_enbi_example") : t("lookup_ate_example")) + '"></label>' +
+    '<label class="lookup-filter"><span>' + t("lookup_height_min") + '</span><input type="number" inputmode="decimal" id="lookupHeightMin" placeholder="' + t("lookup_no_selection") + '"></label>' +
+    '<label class="lookup-filter"><span>' + t("lookup_height_max") + '</span><input type="number" inputmode="decimal" id="lookupHeightMax" placeholder="' + t("lookup_no_selection") + '"></label>';
 
   if (isEnbi) {
-    filters += '<label class="lookup-filter"><span>幅</span><select id="lookupWidth"><option value="">指定なし</option></select></label>' +
-      '<label class="lookup-filter"><span>穴Φ</span><select id="lookupAna"><option value="">指定なし</option><option value="none">穴なし</option></select></label>';
+    filters += '<label class="lookup-filter"><span>' + t("lookup_width") + '</span><select id="lookupWidth"><option value="">' + t("lookup_no_selection") + '</option></select></label>' +
+      '<label class="lookup-filter"><span>' + t("lookup_hole_phi") + '</span><select id="lookupAna"><option value="">' + t("lookup_no_selection") + '</option><option value="none">' + t("lookup_no_hole") + '</option></select></label>';
   } else {
-    filters += '<label class="lookup-filter lookup-filter-wide"><span>Φ</span><select id="lookupPhi"><option value="">指定なし</option></select></label>';
+    filters += '<label class="lookup-filter lookup-filter-wide"><span>' + t("lookup_phi") + '</span><select id="lookupPhi"><option value="">' + t("lookup_no_selection") + '</option></select></label>';
   }
   document.getElementById("lookupFilters").innerHTML = filters;
 
@@ -2854,15 +2906,15 @@ function renderLookupRows() {
         (anaValue === "" || (anaValue === "none" ? ana === null : ana === Number(anaValue)));
     });
     document.getElementById("lookupHead").innerHTML =
-      "<tr><th>番号</th><th>高さ</th><th>幅</th><th>穴Φ</th><th>穴深さ</th></tr>";
+      "<tr><th>" + t("lookup_col_number") + "</th><th>" + t("lookup_col_height") + "</th><th>" + t("lookup_col_width") + "</th><th>" + t("lookup_col_hole_phi") + "</th><th>" + t("lookup_col_hole_depth") + "</th></tr>";
     document.getElementById("lookupBody").innerHTML = rows.length ? rows.map(function(entry) {
       const key = entry[0];
       const item = entry[1];
       return "<tr><td>" + key + "</td><td>" + item.height + " mm</td><td>" +
         (item.width == null ? "—" : item.width + " mm") + "</td><td>" +
-        (item.ana == null ? "なし" : "Φ" + item.ana) + "</td><td>" +
+        (item.ana == null ? t("lookup_none") : "Φ" + item.ana) + "</td><td>" +
         (item.anaFukasa == null ? "—" : item.anaFukasa + " mm") + "</td></tr>";
-    }).join("") : '<tr><td class="lookup-empty" colspan="5">該当する塩ビゲタがありません</td></tr>';
+    }).join("") : '<tr><td class="lookup-empty" colspan="5">' + t("lookup_empty_enbi") + '</td></tr>';
   } else {
     const phiValue = document.getElementById("lookupPhi").value;
     rows = Object.entries(Logic.ateMaster).filter(function(entry) {
@@ -2874,15 +2926,15 @@ function renderLookupRows() {
         (phiValue === "" || Number(item.phi) === Number(phiValue));
     });
     document.getElementById("lookupHead").innerHTML =
-      "<tr><th>番号</th><th>高さ</th><th>Φ</th></tr>";
+      "<tr><th>" + t("lookup_col_number") + "</th><th>" + t("lookup_col_height") + "</th><th>" + t("lookup_phi") + "</th></tr>";
     document.getElementById("lookupBody").innerHTML = rows.length ? rows.map(function(entry) {
       const key = entry[0];
       const item = entry[1];
       return "<tr><td>" + key + "</td><td>" + item.takasa + " mm</td><td>Φ" + item.phi + "</td></tr>";
-    }).join("") : '<tr><td class="lookup-empty" colspan="3">該当するアテがありません</td></tr>';
+    }).join("") : '<tr><td class="lookup-empty" colspan="3">' + t("lookup_empty_ate") + '</td></tr>';
   }
 
-  document.getElementById("lookupCount").textContent = rows.length + "件を表示";
+  document.getElementById("lookupCount").textContent = t("lookup_count", rows.length);
 }
 
 function clearLookupFilters() {
@@ -2899,7 +2951,11 @@ function renderStaticText() {
   document.querySelector(".draft-banner-text").textContent = t("home_draft_banner");
   document.getElementById("btnResumeDraft").textContent = t("home_resume");
   document.getElementById("btnStart").textContent = t("home_start");
+  document.getElementById("btnEnbiLookup").textContent = t("home_enbi_lookup");
+  document.getElementById("btnAteLookup").textContent = t("home_ate_lookup");
   document.getElementById("btnHistory").textContent = t("home_history");
+  document.getElementById("btnLookupClear").textContent = t("lookup_clear");
+  document.getElementById("btnLookupBack").textContent = t("lookup_back");
   document.querySelector(".history-title").textContent = t("history_title");
   document.getElementById("btnHistoryBack").textContent = t("history_back");
 }
