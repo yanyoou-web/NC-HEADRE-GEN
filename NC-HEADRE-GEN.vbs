@@ -2,8 +2,8 @@ Option Explicit
 
 Const APP_NAME = "NC-HEADRE-GEN"
 Const HTML_FILE_NAME = "index.html"
-Const REQUIRED_WIDTH = 624
-Const REQUIRED_HEIGHT = 980
+Const REQUIRED_WIDTH = 655
+Const REQUIRED_HEIGHT = 1030
 Const LAUNCHER_VERSION = "2026.07.23.3"
 
 Dim appTitle
