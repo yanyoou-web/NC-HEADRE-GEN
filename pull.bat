@@ -62,6 +62,12 @@ if not exist "%PROJECT_DIR%\.git" (
     goto :failed
 )
 
+echo 現在の変更状況を確認しています...
+echo.
+git -C "%PROJECT_DIR%" status
+if errorlevel 1 goto :failed
+echo.
+
 echo リポジトリ情報を確認しています...
 git -C "%PROJECT_DIR%" remote get-url origin >nul 2>&1
 if errorlevel 1 (
@@ -90,13 +96,18 @@ if errorlevel 1 goto :failed
 echo.
 echo [OK] NC-HEADRE-GEN を最新状態に更新しました。
 echo.
-pause
-exit /b 0
+goto :keep_open
 
 :failed
 echo.
 echo [ERROR] 更新に失敗しました。
 echo ローカル変更、競合、認証、ネットワーク接続などを確認してください。
 echo.
-pause
-exit /b 1
+
+:keep_open
+if exist "%PROJECT_DIR%" cd /d "%PROJECT_DIR%"
+echo このままコマンドを入力できます。
+echo 画面を閉じるときは exit と入力してください。
+echo.
+endlocal
+cmd /k
