@@ -57,18 +57,123 @@
     color:var(--text-dim);
     letter-spacing:1px;
   }
-  .lang-bar{
+  body.language-drawer-open{ overflow:hidden; }
+  .language-settings-trigger{
+    position:fixed;
+    top:max(14px, env(safe-area-inset-top));
+    right:max(14px, env(safe-area-inset-right));
+    z-index:11020;
+    width:46px;
+    height:46px;
+    padding:0;
+    border-radius:50%;
+    border:1px solid var(--neon-dim);
+    background:rgba(6,10,18,0.94);
+    color:var(--neon);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:23px;
+    line-height:1;
+    box-shadow:0 0 18px rgba(0,217,255,0.12);
+    font-family:inherit;
+  }
+  .language-settings-trigger:hover,
+  .language-settings-trigger:focus-visible{
+    border-color:var(--neon);
+    box-shadow:0 0 20px rgba(0,217,255,0.28);
+    outline:none;
+  }
+  .language-drawer-overlay{
+    position:fixed;
+    inset:0;
+    z-index:11010;
     display:flex;
     justify-content:flex-end;
-    margin-bottom:8px;
+    background:rgba(0,0,0,0.68);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .24s ease;
   }
-  .lang-bar select{
+  .language-drawer-overlay.show{
+    opacity:1;
+    pointer-events:all;
+  }
+  .language-drawer{
+    width:min(360px, calc(100vw - 28px));
+    height:100%;
+    padding:24px 20px max(24px, env(safe-area-inset-bottom));
+    background:linear-gradient(160deg,#080e1a 0%,#04080f 100%);
+    border-left:1px solid rgba(0,217,255,0.35);
+    box-shadow:-10px 0 40px rgba(0,217,255,0.14);
+    transform:translateX(100%);
+    transition:transform .28s ease;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .language-drawer-overlay.show .language-drawer{ transform:translateX(0); }
+  .language-drawer-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .language-drawer-title{
+    margin:0;
+    color:var(--neon);
+    font-size:18px;
+    letter-spacing:1.5px;
+  }
+  .language-drawer-close{
+    flex:0 0 auto;
+    width:40px;
+    height:40px;
+    padding:0;
+    border-radius:50%;
+    border:1px solid #263849;
+    background:#07101b;
+    color:var(--text-dim);
+    font-size:24px;
+    line-height:1;
+    font-family:inherit;
+  }
+  .language-drawer-hint{
+    margin:0;
+    color:var(--text-dim);
+    font-size:13px;
+    line-height:1.7;
+  }
+  .language-select-label{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    color:var(--text-dim);
+    font-size:12px;
+  }
+  .language-drawer-select{
+    width:100%;
+    padding:13px 14px;
     background:var(--card);
     color:var(--neon);
     border:1px solid var(--neon-dim);
-    border-radius:6px;
-    padding:4px 8px;
-    font-size:12px;
+    border-radius:10px;
+    font-size:16px;
+    font-family:inherit;
+  }
+  .language-drawer-home{
+    width:100%;
+    margin-top:auto;
+  }
+  @media (max-width:480px){
+    .language-settings-trigger{
+      top:max(10px, env(safe-area-inset-top));
+      right:max(10px, env(safe-area-inset-right));
+      width:42px;
+      height:42px;
+      font-size:21px;
+    }
+    .language-drawer{ width:min(340px, calc(100vw - 18px)); }
   }
   .progress-wrap{
     margin-bottom:20px;
@@ -978,6 +1083,24 @@
 </head>
 <body>
 
+<button type="button" class="language-settings-trigger" id="btnLanguageSettings" aria-label="言語設定を開く" aria-expanded="false" aria-controls="languageDrawer">
+  <span aria-hidden="true">⚙</span>
+</button>
+<div class="language-drawer-overlay" id="languageDrawerOverlay">
+  <aside class="language-drawer" id="languageDrawer" role="dialog" aria-modal="true" aria-labelledby="languageDrawerTitle">
+    <div class="language-drawer-header">
+      <h2 class="language-drawer-title" id="languageDrawerTitle">言語設定</h2>
+      <button type="button" class="language-drawer-close" id="btnLanguageClose" aria-label="閉じる">×</button>
+    </div>
+    <p class="language-drawer-hint" id="languageDrawerHint">表示する言語を選んでください</p>
+    <label class="language-select-label" for="langSelect">
+      <span id="languageSelectLabel">表示言語</span>
+      <select class="language-drawer-select" id="langSelect"></select>
+    </label>
+    <button type="button" class="ghost language-drawer-home" id="btnLanguageHome">ホームに戻る</button>
+  </aside>
+</div>
+
 <!-- ホーム画面 -->
 <div id="homeScreen">
   <img src="appicon.png" class="home-icon" alt="NCヘッダー作成アイコン">
@@ -1022,10 +1145,6 @@
 </div>
 
 <div class="app" id="appMain" style="display:none">
-  <div class="lang-bar">
-    <select id="langSelect"></select>
-  </div>
-
   <div class="progress-wrap">
     <div class="step-dots" id="stepDots"></div>
   </div>
@@ -1219,6 +1338,13 @@ const I18N = {
     home_enbi_lookup: "塩ビゲタ検索",
     home_ate_lookup: "アテ検索",
 
+    settings_open: "言語設定を開く",
+    settings_title: "言語設定",
+    settings_hint: "表示する言語を選んでください",
+    settings_select_label: "表示言語",
+    settings_close: "閉じる",
+    settings_home: "ホームに戻る",
+
     lookup_enbi_title: "塩ビゲタ検索",
     lookup_ate_title: "アテ検索",
     lookup_keyword_label: "番号で絞り込み",
@@ -1384,6 +1510,13 @@ const I18N = {
     home_enbi_lookup: "Tra cứu đế nhựa PVC",
     home_ate_lookup: "Tra cứu tấm đệm",
 
+    settings_open: "Mở cài đặt ngôn ngữ",
+    settings_title: "Cài đặt ngôn ngữ",
+    settings_hint: "Chọn ngôn ngữ hiển thị",
+    settings_select_label: "Ngôn ngữ hiển thị",
+    settings_close: "Đóng",
+    settings_home: "Quay lại trang chủ",
+
     lookup_enbi_title: "Tra cứu đế nhựa PVC",
     lookup_ate_title: "Tra cứu tấm đệm",
     lookup_keyword_label: "Lọc theo số",
@@ -1457,12 +1590,73 @@ LANGS.forEach(code => {
 });
 langSelect.value = currentLang;
 document.documentElement.lang = currentLang;
-langSelect.addEventListener("change", () => {
-  currentLang = langSelect.value;
-  document.documentElement.lang = currentLang; // 読み上げソフトが正しい発音ルールを選べるように、ページ全体の言語設定も切り替える
+
+function applyLanguage(code) {
+  if (!LANGS.includes(code)) return;
+  currentLang = code;
+  langSelect.value = currentLang;
+  document.documentElement.lang = currentLang;
   try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) { /* 保存できない環境では何もしない */ }
+
   render();
-  renderStaticText(); // ホーム画面・履歴画面の文字も選んだ言語に合わせる
+  renderStaticText();
+
+  if (document.getElementById("historyScreen").style.display === "flex") {
+    renderHistory();
+  }
+  if (document.getElementById("lookupScreen").style.display === "flex") {
+    refreshLookupLanguage();
+  }
+  if (activeWarnValues) {
+    renderWarnModalText(activeWarnValues.guideHeight, activeWarnValues.selectedHeight);
+  }
+}
+
+langSelect.addEventListener("change", () => {
+  applyLanguage(langSelect.value);
+});
+
+const languageDrawerOverlay = document.getElementById("languageDrawerOverlay");
+const languageDrawer = document.getElementById("languageDrawer");
+const btnLanguageSettings = document.getElementById("btnLanguageSettings");
+const btnLanguageClose = document.getElementById("btnLanguageClose");
+let languageDrawerReturnFocus = null;
+
+function openLanguageDrawer() {
+  languageDrawerReturnFocus = document.activeElement;
+  languageDrawerOverlay.classList.add("show");
+  document.body.classList.add("language-drawer-open");
+  btnLanguageSettings.setAttribute("aria-expanded", "true");
+  setTimeout(() => langSelect.focus(), 0);
+}
+
+function closeLanguageDrawer() {
+  languageDrawerOverlay.classList.remove("show");
+  document.body.classList.remove("language-drawer-open");
+  btnLanguageSettings.setAttribute("aria-expanded", "false");
+  if (languageDrawerReturnFocus && typeof languageDrawerReturnFocus.focus === "function") {
+    languageDrawerReturnFocus.focus();
+  }
+}
+
+btnLanguageSettings.addEventListener("click", () => {
+  if (languageDrawerOverlay.classList.contains("show")) closeLanguageDrawer();
+  else openLanguageDrawer();
+});
+btnLanguageSettings.addEventListener("keydown", e => e.stopPropagation());
+btnLanguageClose.addEventListener("click", closeLanguageDrawer);
+languageDrawerOverlay.addEventListener("click", e => {
+  if (e.target === languageDrawerOverlay) closeLanguageDrawer();
+});
+languageDrawer.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeLanguageDrawer();
+  e.stopPropagation();
+});
+document.getElementById("btnLanguageHome").addEventListener("click", () => {
+  if (closeActiveWarnModal) closeActiveWarnModal();
+  closeEgg();
+  closeLanguageDrawer();
+  showHome();
 });
 
 /* ---------- 状態 ---------- */
@@ -2606,8 +2800,10 @@ function showToast(msg) {
 }
 
 /* ---------- 塩ビ高さ不足 警告モーダル ---------- */
-function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
-  const overlay = document.getElementById("warnOverlay");
+let activeWarnValues = null;
+let closeActiveWarnModal = null;
+
+function renderWarnModalText(guideHeight, selectedHeight) {
   document.getElementById("warnTitle").textContent   = t("enbiWarnTitle");
   document.getElementById("warnBody").innerHTML      = t("enbiWarnBody").replace(/\n/g, "<br>");
   document.getElementById("warnVals").innerHTML      =
@@ -2615,6 +2811,13 @@ function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
     `<span class="wlabel">${t("enbiWarnSelected")}</span>　<span class="v-bad">${Logic.fmt(selectedHeight)} mm</span>`;
   document.getElementById("warnBtnBack").textContent    = t("enbiWarnBack");
   document.getElementById("warnBtnProceed").textContent = t("enbiWarnProceed");
+}
+
+function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
+  if (closeActiveWarnModal) closeActiveWarnModal();
+  const overlay = document.getElementById("warnOverlay");
+  activeWarnValues = { guideHeight, selectedHeight };
+  renderWarnModalText(guideHeight, selectedHeight);
 
   overlay.classList.add("show");
 
@@ -2625,7 +2828,10 @@ function showWarnModal(guideHeight, selectedHeight, onProceed, onBackExtra) {
     overlay.classList.remove("show");
     btnBack.removeEventListener("click", handleBack);
     btnProceed.removeEventListener("click", handleProceed);
+    activeWarnValues = null;
+    if (closeActiveWarnModal === close) closeActiveWarnModal = null;
   }
+  closeActiveWarnModal = close;
   function handleBack() {
     close();
     if (typeof onBackExtra === "function") onBackExtra();
@@ -2840,7 +3046,7 @@ function lookupOption(value, label) {
   return '<option value="' + value + '">' + label + '</option>';
 }
 
-function openLookup(type) {
+function openLookup(type, shouldFocusKeyword) {
   lookupType = type;
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("appMain").style.display = "none";
@@ -2883,7 +3089,9 @@ function openLookup(type) {
     el.addEventListener(el.tagName === "SELECT" ? "change" : "input", renderLookupRows);
   });
   renderLookupRows();
-  document.getElementById("lookupKeyword").focus();
+  if (shouldFocusKeyword !== false) {
+    document.getElementById("lookupKeyword").focus();
+  }
 }
 
 function renderLookupRows() {
@@ -2937,6 +3145,21 @@ function renderLookupRows() {
   document.getElementById("lookupCount").textContent = t("lookup_count", rows.length);
 }
 
+function refreshLookupLanguage() {
+  const values = {};
+  document.querySelectorAll("#lookupFilters input, #lookupFilters select").forEach(function(el) {
+    values[el.id] = el.value;
+  });
+
+  openLookup(lookupType, false);
+
+  Object.keys(values).forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = values[id];
+  });
+  renderLookupRows();
+}
+
 function clearLookupFilters() {
   document.querySelectorAll("#lookupFilters input, #lookupFilters select").forEach(function(el) {
     el.value = "";
@@ -2956,6 +3179,16 @@ function renderStaticText() {
   document.getElementById("btnHistory").textContent = t("home_history");
   document.getElementById("btnLookupClear").textContent = t("lookup_clear");
   document.getElementById("btnLookupBack").textContent = t("lookup_back");
+
+  const settingsButton = document.getElementById("btnLanguageSettings");
+  settingsButton.setAttribute("aria-label", t("settings_open"));
+  settingsButton.setAttribute("title", t("settings_open"));
+  document.getElementById("languageDrawerTitle").textContent = t("settings_title");
+  document.getElementById("languageDrawerHint").textContent = t("settings_hint");
+  document.getElementById("languageSelectLabel").textContent = t("settings_select_label");
+  document.getElementById("btnLanguageClose").setAttribute("aria-label", t("settings_close"));
+  document.getElementById("btnLanguageHome").textContent = t("settings_home");
+
   document.querySelector(".history-title").textContent = t("history_title");
   document.getElementById("btnHistoryBack").textContent = t("history_back");
 }
