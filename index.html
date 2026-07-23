@@ -568,6 +568,153 @@
     background:rgba(0,217,255,0.2);
   }
 
+
+  /* ===== ホーム画面：クイック検索 ===== */
+  .home-search-actions{
+    width:100%;
+    max-width:360px;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .home-btn-search{
+    flex:none;
+    min-width:0;
+    padding:12px 8px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.5px;
+    background:rgba(0,217,255,0.05);
+    color:var(--neon);
+    border:1px solid var(--neon-dim);
+    font-family:inherit;
+  }
+  .home-btn-search:hover{
+    border-color:var(--neon);
+    box-shadow:0 0 14px rgba(0,217,255,0.22);
+  }
+
+  /* ===== 塩ビゲタ・アテ検索 画面 ===== */
+  #lookupScreen{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+    max-width:760px;
+    min-height:100vh;
+    padding:40px 0;
+  }
+  .lookup-panel{
+    width:100%;
+    background:linear-gradient(180deg, var(--card), #060a12);
+    border:1px solid var(--neon-dim);
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 0 30px rgba(0,217,255,0.08);
+  }
+  .lookup-title{
+    margin:0 0 18px;
+    color:var(--neon);
+    font-size:18px;
+    letter-spacing:2px;
+    text-align:center;
+    text-shadow:0 0 6px rgba(0,217,255,0.6);
+  }
+  .lookup-filters{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .lookup-filter{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .lookup-filter-wide{ grid-column:1 / -1; }
+  .lookup-filter span{
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:.5px;
+  }
+  .lookup-filter input,
+  .lookup-filter select{
+    width:100%;
+    padding:10px 12px;
+    font-size:14px;
+  }
+  .lookup-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .lookup-count{
+    color:var(--text-dim);
+    font-size:12px;
+  }
+  .lookup-clear{
+    flex:0 0 auto;
+    width:auto;
+    padding:8px 12px;
+    font-size:12px;
+  }
+  .lookup-table-wrap{
+    width:100%;
+    overflow-x:auto;
+    border:1px solid #182d3c;
+    border-radius:10px;
+  }
+  .lookup-table{
+    width:100%;
+    min-width:520px;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  .lookup-table th,
+  .lookup-table td{
+    padding:10px 12px;
+    border-bottom:1px solid #122033;
+    text-align:right;
+    white-space:nowrap;
+  }
+  .lookup-table th{
+    color:var(--text-dim);
+    background:#08111c;
+    font-size:11px;
+    letter-spacing:.5px;
+  }
+  .lookup-table th:first-child,
+  .lookup-table td:first-child{
+    text-align:left;
+  }
+  .lookup-table td:first-child{
+    color:var(--neon);
+    font-weight:700;
+  }
+  .lookup-table tbody tr:last-child td{ border-bottom:0; }
+  .lookup-table tbody tr:hover{ background:rgba(0,217,255,0.04); }
+  .lookup-empty{
+    color:var(--text-dim) !important;
+    text-align:center !important;
+    font-weight:400 !important;
+    padding:28px 12px !important;
+  }
+  .lookup-back{
+    width:100%;
+    margin-top:16px;
+  }
+  @media (max-width:480px){
+    #lookupScreen{ padding:18px 0; }
+    .lookup-panel{ padding:16px 12px; }
+    .lookup-filters{ grid-template-columns:1fr; }
+    .lookup-filter-wide{ grid-column:auto; }
+    .home-btn-search{ font-size:12px; }
+  }
+
   /* ===== 生成履歴 画面 ===== */
   #historyScreen{
     display:none;
@@ -840,7 +987,31 @@
     <button class="home-btn-resume" id="btnResumeDraft">続きから再開する</button>
   </div>
   <button class="home-btn-start" id="btnStart">開始する</button>
+  <div class="home-search-actions">
+    <button class="home-btn-search" id="btnEnbiLookup">塩ビゲタ検索</button>
+    <button class="home-btn-search" id="btnAteLookup">アテ検索</button>
+  </div>
   <button class="home-btn-history" id="btnHistory">生成履歴</button>
+</div>
+
+
+<!-- 塩ビゲタ・アテ検索 画面 -->
+<div id="lookupScreen">
+  <div class="lookup-panel">
+    <h2 class="lookup-title" id="lookupTitle"></h2>
+    <div class="lookup-filters" id="lookupFilters"></div>
+    <div class="lookup-toolbar">
+      <div class="lookup-count" id="lookupCount"></div>
+      <button type="button" class="ghost lookup-clear" id="btnLookupClear">絞り込みを解除</button>
+    </div>
+    <div class="lookup-table-wrap">
+      <table class="lookup-table">
+        <thead id="lookupHead"></thead>
+        <tbody id="lookupBody"></tbody>
+      </table>
+    </div>
+    <button type="button" class="ghost lookup-back" id="btnLookupBack">ホームに戻る</button>
+  </div>
 </div>
 
 <!-- 生成履歴 画面 -->
@@ -2604,6 +2775,124 @@ function renderHistory() {
   });
 }
 
+
+/* ---------- ホーム画面から開く塩ビゲタ・アテ検索 ---------- */
+let lookupType = "enbi";
+
+function lookupNumber(id) {
+  const value = document.getElementById(id).value;
+  return value === "" ? null : Number(value);
+}
+
+function lookupOption(value, label) {
+  return '<option value="' + value + '">' + label + '</option>';
+}
+
+function openLookup(type) {
+  lookupType = type;
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("appMain").style.display = "none";
+  document.getElementById("historyScreen").style.display = "none";
+  document.getElementById("lookupScreen").style.display = "flex";
+
+  const isEnbi = type === "enbi";
+  document.getElementById("lookupTitle").textContent = isEnbi ? "塩ビゲタ検索" : "アテ検索";
+
+  let filters = '<label class="lookup-filter lookup-filter-wide"><span>番号で絞り込み</span>' +
+    '<input type="text" id="lookupKeyword" placeholder="' + (isEnbi ? "例：B-12、BA-3" : "例：C-20") + '"></label>' +
+    '<label class="lookup-filter"><span>高さ（以上）</span><input type="number" inputmode="decimal" id="lookupHeightMin" placeholder="指定なし"></label>' +
+    '<label class="lookup-filter"><span>高さ（以下）</span><input type="number" inputmode="decimal" id="lookupHeightMax" placeholder="指定なし"></label>';
+
+  if (isEnbi) {
+    filters += '<label class="lookup-filter"><span>幅</span><select id="lookupWidth"><option value="">指定なし</option></select></label>' +
+      '<label class="lookup-filter"><span>穴Φ</span><select id="lookupAna"><option value="">指定なし</option><option value="none">穴なし</option></select></label>';
+  } else {
+    filters += '<label class="lookup-filter lookup-filter-wide"><span>Φ</span><select id="lookupPhi"><option value="">指定なし</option></select></label>';
+  }
+  document.getElementById("lookupFilters").innerHTML = filters;
+
+  if (isEnbi) {
+    const width = document.getElementById("lookupWidth");
+    Logic.getEnbiWidthOptions().forEach(function(v) {
+      width.insertAdjacentHTML("beforeend", lookupOption(v, v + " mm"));
+    });
+    const ana = document.getElementById("lookupAna");
+    Logic.getEnbiAnaOptions().forEach(function(v) {
+      ana.insertAdjacentHTML("beforeend", lookupOption(v, "Φ" + v));
+    });
+  } else {
+    const phi = document.getElementById("lookupPhi");
+    Logic.getAtePhiOptions().forEach(function(v) {
+      phi.insertAdjacentHTML("beforeend", lookupOption(v, "Φ" + v));
+    });
+  }
+
+  document.querySelectorAll("#lookupFilters input, #lookupFilters select").forEach(function(el) {
+    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", renderLookupRows);
+  });
+  renderLookupRows();
+  document.getElementById("lookupKeyword").focus();
+}
+
+function renderLookupRows() {
+  const keyword = document.getElementById("lookupKeyword").value.trim().toLowerCase();
+  const heightMin = lookupNumber("lookupHeightMin");
+  const heightMax = lookupNumber("lookupHeightMax");
+  let rows = [];
+
+  if (lookupType === "enbi") {
+    const widthValue = document.getElementById("lookupWidth").value;
+    const anaValue = document.getElementById("lookupAna").value;
+    rows = Object.entries(Logic.enbiGetaMaster).filter(function(entry) {
+      const key = entry[0];
+      const item = entry[1];
+      const ana = item.ana == null ? null : Number(item.ana);
+      return key.toLowerCase().includes(keyword) &&
+        (heightMin === null || item.height >= heightMin) &&
+        (heightMax === null || item.height <= heightMax) &&
+        (widthValue === "" || Number(item.width) === Number(widthValue)) &&
+        (anaValue === "" || (anaValue === "none" ? ana === null : ana === Number(anaValue)));
+    });
+    document.getElementById("lookupHead").innerHTML =
+      "<tr><th>番号</th><th>高さ</th><th>幅</th><th>穴Φ</th><th>穴深さ</th></tr>";
+    document.getElementById("lookupBody").innerHTML = rows.length ? rows.map(function(entry) {
+      const key = entry[0];
+      const item = entry[1];
+      return "<tr><td>" + key + "</td><td>" + item.height + " mm</td><td>" +
+        (item.width == null ? "—" : item.width + " mm") + "</td><td>" +
+        (item.ana == null ? "なし" : "Φ" + item.ana) + "</td><td>" +
+        (item.anaFukasa == null ? "—" : item.anaFukasa + " mm") + "</td></tr>";
+    }).join("") : '<tr><td class="lookup-empty" colspan="5">該当する塩ビゲタがありません</td></tr>';
+  } else {
+    const phiValue = document.getElementById("lookupPhi").value;
+    rows = Object.entries(Logic.ateMaster).filter(function(entry) {
+      const key = entry[0];
+      const item = entry[1];
+      return key.toLowerCase().includes(keyword) &&
+        (heightMin === null || item.takasa >= heightMin) &&
+        (heightMax === null || item.takasa <= heightMax) &&
+        (phiValue === "" || Number(item.phi) === Number(phiValue));
+    });
+    document.getElementById("lookupHead").innerHTML =
+      "<tr><th>番号</th><th>高さ</th><th>Φ</th></tr>";
+    document.getElementById("lookupBody").innerHTML = rows.length ? rows.map(function(entry) {
+      const key = entry[0];
+      const item = entry[1];
+      return "<tr><td>" + key + "</td><td>" + item.takasa + " mm</td><td>Φ" + item.phi + "</td></tr>";
+    }).join("") : '<tr><td class="lookup-empty" colspan="3">該当するアテがありません</td></tr>';
+  }
+
+  document.getElementById("lookupCount").textContent = rows.length + "件を表示";
+}
+
+function clearLookupFilters() {
+  document.querySelectorAll("#lookupFilters input, #lookupFilters select").forEach(function(el) {
+    el.value = "";
+  });
+  renderLookupRows();
+  document.getElementById("lookupKeyword").focus();
+}
+
 /* ---------- ホーム画面・履歴画面の文字を選んだ言語に置き換える ---------- */
 function renderStaticText() {
   document.querySelector(".home-icon").alt = t("home_icon_alt");
@@ -2618,6 +2907,7 @@ function renderStaticText() {
 function showHistory() {
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("appMain").style.display = "none";
+  document.getElementById("lookupScreen").style.display = "none";
   document.getElementById("historyScreen").style.display = "flex";
   renderHistory();
 }
@@ -2642,12 +2932,14 @@ function showHome() {
   document.getElementById("homeScreen").style.display = "flex";
   document.getElementById("appMain").style.display    = "none";
   document.getElementById("historyScreen").style.display = "none";
+  document.getElementById("lookupScreen").style.display = "none";
   updateDraftBanner();
 }
 function startApp() {
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("appMain").style.display    = "";
   document.getElementById("historyScreen").style.display = "none";
+  document.getElementById("lookupScreen").style.display = "none";
   resetFilters(); // 絞り込みは新しい生成のたびにリセット
   render();
 }
@@ -2670,6 +2962,10 @@ document.getElementById("btnResumeDraft").addEventListener("click", () => {
 });
 document.getElementById("btnHistory").addEventListener("click", showHistory);
 document.getElementById("btnHistoryBack").addEventListener("click", showHome);
+document.getElementById("btnEnbiLookup").addEventListener("click", function() { openLookup("enbi"); });
+document.getElementById("btnAteLookup").addEventListener("click", function() { openLookup("ate"); });
+document.getElementById("btnLookupClear").addEventListener("click", clearLookupFilters);
+document.getElementById("btnLookupBack").addEventListener("click", showHome);
 
 /* ---------- 入力途中でページを閉じようとしたときの確認 ---------- */
 window.addEventListener("beforeunload", (e) => {
