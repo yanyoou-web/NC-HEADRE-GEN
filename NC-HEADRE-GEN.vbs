@@ -10,9 +10,12 @@ Dim appTitle
 Dim shell
 Dim fso
 Dim appFolder
+Dim preferredAppFolder
+Dim targetAppFolder
 Dim htmlPath
 Dim fileUrl
 Dim edgePath
+Dim edgeUserDataFolder
 Dim iconSourcePath
 Dim lockPath
 Dim hasLaunchLock
@@ -456,9 +459,23 @@ Sub ShowWindowNotFound()
 End Sub
 
 appFolder = fso.GetParentFolderName(WScript.ScriptFullName)
+preferredAppFolder = fso.BuildPath( _
+    shell.ExpandEnvironmentStrings("%USERPROFILE%"), "Documents")
+preferredAppFolder = fso.BuildPath( _
+    preferredAppFolder, UnicodeText("5C71 7530"))
+preferredAppFolder = fso.BuildPath(preferredAppFolder, APP_NAME)
+
+targetAppFolder = preferredAppFolder
 htmlPath = fso.GetAbsolutePathName( _
-    fso.BuildPath(appFolder, HTML_FILE_NAME))
-iconSourcePath = fso.BuildPath(appFolder, ICON_FILE_NAME)
+    fso.BuildPath(targetAppFolder, HTML_FILE_NAME))
+
+If Not fso.FileExists(htmlPath) Then
+    targetAppFolder = appFolder
+    htmlPath = fso.GetAbsolutePathName( _
+        fso.BuildPath(targetAppFolder, HTML_FILE_NAME))
+End If
+
+iconSourcePath = fso.BuildPath(targetAppFolder, ICON_FILE_NAME)
 
 If Not fso.FileExists(htmlPath) Then
     ShowNasError htmlPath
@@ -473,6 +490,10 @@ End If
 
 EnsureDesktopShortcut _
     WScript.ScriptFullName, appFolder, iconSourcePath, edgePath
+
+edgeUserDataFolder = fso.BuildPath( _
+    shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
+edgeUserDataFolder = fso.BuildPath(edgeUserDataFolder, "EdgeProfile")
 
 If RestoreAndPositionEdgeWindow(appTitle, False) Then
     shell.AppActivate appTitle
@@ -518,7 +539,11 @@ End If
 On Error Resume Next
 Err.Clear
 launchResult = shell.Run( _
-    QuoteArgument(edgePath) & " --app=" & QuoteArgument(fileUrl), _
+    QuoteArgument(edgePath) & _
+    " --user-data-dir=" & QuoteArgument(edgeUserDataFolder) & _
+    " --no-first-run --no-default-browser-check" & _
+    " --disable-background-mode" & _
+    " --app=" & QuoteArgument(fileUrl), _
     1, _
     False)
 
