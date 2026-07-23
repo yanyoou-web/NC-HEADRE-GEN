@@ -54,7 +54,7 @@ const Logic = (() => {
     "NCL-085":          { tumeNagasa: 62, tetsugetaNo: "T-9", offset: 199.575,  kishu: "森精機NLX2500" },
     "NCL-093":          { tumeNagasa: 68, tetsugetaNo: "T-2", offset: -199.044, kishu: "ツガミ" },
     "NCL-094":          { tumeNagasa: 68, tetsugetaNo: "T-2", offset: -199.015, kishu: "ツガミ" },
-    "NCL-0116":         { tumeNagasa: 63, tetsugetaNo: "T-9", offset: 87.896, kishu: "ツガミ" },
+    "NCL-0116":         { tumeNagasa: 63, tetsugetaNo: "T-9", offset: 87.896, kishu: "森精機NLX2500" },
   };
 
 
