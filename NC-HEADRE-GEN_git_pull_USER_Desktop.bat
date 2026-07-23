@@ -2,16 +2,42 @@
 setlocal
 chcp 65001 >nul
 
-set "PROJECT_DIR=C:\Users\USER\Desktop\NC-HEADRE-GEN"
-set "PARENT_DIR=C:\Users\USER\Desktop"
 set "REPO_URL=https://github.com/yanyoou-web/NC-HEADRE-GEN.git"
 set "BRANCH=main"
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set "DOCUMENTS_DIR=%USERPROFILE%\Documents"
+set "DESKTOP_DIR=%USERPROFILE%\Desktop"
+
+for /f "usebackq delims=" %%I in (`powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('MyDocuments')"`) do set "DOCUMENTS_DIR=%%I"
+for /f "usebackq delims=" %%I in (`powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP_DIR=%%I"
+
+set "COMPANY_DIR=%DOCUMENTS_DIR%\山田\NC-HEADRE-GEN"
+set "HOME_DIR=%DESKTOP_DIR%\NC-HEADRE-GEN"
+set "PROJECT_DIR="
+
+if exist "%SCRIPT_DIR%\.git" set "PROJECT_DIR=%SCRIPT_DIR%"
+if not defined PROJECT_DIR if exist "%COMPANY_DIR%\.git" set "PROJECT_DIR=%COMPANY_DIR%"
+if not defined PROJECT_DIR if exist "%HOME_DIR%\.git" set "PROJECT_DIR=%HOME_DIR%"
+
+if not defined PROJECT_DIR (
+    if exist "%DOCUMENTS_DIR%\山田" (
+        set "PROJECT_DIR=%COMPANY_DIR%"
+    ) else (
+        set "PROJECT_DIR=%HOME_DIR%"
+    )
+)
+
+for %%I in ("%PROJECT_DIR%\..") do set "PARENT_DIR=%%~fI"
 
 title NC-HEADRE-GEN Git Pull
 
 echo ========================================
 echo   NC-HEADRE-GEN Git Pull
 echo ========================================
+echo.
+echo 更新対象:
+echo %PROJECT_DIR%
 echo.
 
 where git >nul 2>&1
