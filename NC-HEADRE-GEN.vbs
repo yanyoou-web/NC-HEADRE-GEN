@@ -5,26 +5,38 @@ Const HTML_FILE_NAME = "index.html"
 Const ICON_FILE_NAME = "appicon.png"
 Const REQUIRED_WIDTH = 624
 Const REQUIRED_HEIGHT = 980
+Const LAUNCHER_VERSION = "2026.07.23.2"
 
 Dim appTitle
 Dim shell
 Dim fso
 Dim appFolder
 Dim preferredAppFolder
+Dim desktopAppFolder
 Dim targetAppFolder
 Dim htmlPath
 Dim fileUrl
 Dim edgePath
 Dim edgeUserDataFolder
+Dim logFolder
+Dim logPath
 Dim iconSourcePath
 Dim lockPath
 Dim hasLaunchLock
 Dim waitCount
 Dim launchResult
+Dim launchCommand
+Dim launchErrorNumber
+Dim launchErrorDescription
 Dim launchedWindowFound
+Dim shortcutUpdated
 
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
+
+logFolder = fso.BuildPath( _
+    shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
+logPath = fso.BuildPath(logFolder, "launcher.log")
 
 appTitle = "NC" & _
     ChrW(&H30D8) & ChrW(&H30C3) & ChrW(&H30C0) & ChrW(&H30FC) & _
@@ -52,6 +64,27 @@ End Function
 
 Sub AddScriptLine(ByRef scriptText, ByVal lineText)
     scriptText = scriptText & lineText & vbCrLf
+End Sub
+
+Sub WriteLauncherLog(ByVal message)
+    Dim logFile
+
+    On Error Resume Next
+    If Not fso.FolderExists(logFolder) Then
+        fso.CreateFolder logFolder
+    End If
+
+    Set logFile = fso.OpenTextFile(logPath, 8, True, -1)
+    If Err.Number = 0 Then
+        logFile.WriteLine _
+            Year(Now) & "-" & Right("0" & Month(Now), 2) & "-" & _
+            Right("0" & Day(Now), 2) & " " & _
+            Right("0" & Hour(Now), 2) & ":" & _
+            Right("0" & Minute(Now), 2) & ":" & _
+            Right("0" & Second(Now), 2) & " " & message
+        logFile.Close
+    End If
+    On Error GoTo 0
 End Sub
 
 Function FindEdgePath()
@@ -354,7 +387,7 @@ Function CreateShortcutIcon(ByVal sourcePngPath, ByVal destinationIconPath)
     On Error GoTo 0
 End Function
 
-Sub EnsureDesktopShortcut( _
+Function EnsureDesktopShortcut( _
     ByVal scriptPath, _
     ByVal workingFolder, _
     ByVal sourcePngPath, _
@@ -367,15 +400,11 @@ Sub EnsureDesktopShortcut( _
     Dim launcher
     Dim wscriptPath
 
+    EnsureDesktopShortcut = False
     On Error Resume Next
 
     desktopFolder = shell.SpecialFolders("Desktop")
     shortcutPath = fso.BuildPath(desktopFolder, APP_NAME & ".lnk")
-
-    If fso.FileExists(shortcutPath) Then
-        On Error GoTo 0
-        Exit Sub
-    End If
 
     iconFolder = fso.BuildPath( _
         shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
@@ -405,9 +434,13 @@ Sub EnsureDesktopShortcut( _
         launcher.IconLocation = edgeExecutable & ",0"
     End If
 
+    Err.Clear
     launcher.Save
+    If Err.Number = 0 Then
+        EnsureDesktopShortcut = True
+    End If
     On Error GoTo 0
-End Sub
+End Function
 
 Sub ShowNasError(ByVal targetPath)
     Dim message
@@ -460,14 +493,21 @@ End Sub
 
 appFolder = fso.GetParentFolderName(WScript.ScriptFullName)
 preferredAppFolder = fso.BuildPath( _
-    shell.ExpandEnvironmentStrings("%USERPROFILE%"), "Documents")
+    shell.SpecialFolders("MyDocuments"), UnicodeText("5C71 7530"))
 preferredAppFolder = fso.BuildPath( _
-    preferredAppFolder, UnicodeText("5C71 7530"))
-preferredAppFolder = fso.BuildPath(preferredAppFolder, APP_NAME)
+    preferredAppFolder, APP_NAME)
+desktopAppFolder = fso.BuildPath( _
+    shell.SpecialFolders("Desktop"), APP_NAME)
 
 targetAppFolder = preferredAppFolder
 htmlPath = fso.GetAbsolutePathName( _
     fso.BuildPath(targetAppFolder, HTML_FILE_NAME))
+
+If Not fso.FileExists(htmlPath) Then
+    targetAppFolder = desktopAppFolder
+    htmlPath = fso.GetAbsolutePathName( _
+        fso.BuildPath(targetAppFolder, HTML_FILE_NAME))
+End If
 
 If Not fso.FileExists(htmlPath) Then
     targetAppFolder = appFolder
@@ -476,20 +516,28 @@ If Not fso.FileExists(htmlPath) Then
 End If
 
 iconSourcePath = fso.BuildPath(targetAppFolder, ICON_FILE_NAME)
+WriteLauncherLog _
+    "START version=" & LAUNCHER_VERSION & _
+    " script=" & WScript.ScriptFullName & _
+    " html=" & htmlPath
 
 If Not fso.FileExists(htmlPath) Then
+    WriteLauncherLog "ERROR html-not-found"
     ShowNasError htmlPath
     WScript.Quit 1
 End If
 
 edgePath = FindEdgePath()
 If Len(edgePath) = 0 Then
+    WriteLauncherLog "ERROR edge-not-found"
     ShowEdgeNotFound
     WScript.Quit 1
 End If
+WriteLauncherLog "EDGE path=" & edgePath
 
-EnsureDesktopShortcut _
-    WScript.ScriptFullName, appFolder, iconSourcePath, edgePath
+shortcutUpdated = EnsureDesktopShortcut( _
+    WScript.ScriptFullName, appFolder, iconSourcePath, edgePath)
+WriteLauncherLog "SHORTCUT refreshed=" & CStr(shortcutUpdated)
 
 edgeUserDataFolder = fso.BuildPath( _
     shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
@@ -538,16 +586,24 @@ End If
 
 On Error Resume Next
 Err.Clear
-launchResult = shell.Run( _
+launchCommand = _
     QuoteArgument(edgePath) & _
     " --user-data-dir=" & QuoteArgument(edgeUserDataFolder) & _
     " --no-first-run --no-default-browser-check" & _
     " --disable-background-mode" & _
-    " --app=" & QuoteArgument(fileUrl), _
+    " --app=" & QuoteArgument(fileUrl)
+WriteLauncherLog "LAUNCH command=" & launchCommand
+launchResult = shell.Run( _
+    launchCommand, _
     1, _
     False)
+launchErrorNumber = Err.Number
+launchErrorDescription = Err.Description
 
-If Err.Number <> 0 Then
+If launchErrorNumber <> 0 Then
+    WriteLauncherLog _
+        "ERROR launch number=" & CStr(launchErrorNumber) & _
+        " description=" & launchErrorDescription
     On Error GoTo 0
     ReleaseLaunchLock lockPath
     ShowWindowNotFound
@@ -566,9 +622,11 @@ End If
 ReleaseLaunchLock lockPath
 
 If launchedWindowFound Then
+    WriteLauncherLog "SUCCESS window-found"
     shell.AppActivate appTitle
     WScript.Quit 0
 End If
 
+WriteLauncherLog "ERROR window-not-found"
 ShowWindowNotFound
 WScript.Quit 1
