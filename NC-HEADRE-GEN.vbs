@@ -5,7 +5,7 @@ Const HTML_FILE_NAME = "index.html"
 Const ICON_FILE_NAME = "appicon.png"
 Const REQUIRED_WIDTH = 624
 Const REQUIRED_HEIGHT = 980
-Const LAUNCHER_VERSION = "2026.07.23.2"
+Const LAUNCHER_VERSION = "2026.07.23.3"
 
 Dim appTitle
 Dim shell
@@ -60,6 +60,75 @@ End Function
 
 Function QuoteArgument(ByVal value)
     QuoteArgument = Chr(34) & Replace(value, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End Function
+
+Function PercentByte(ByVal value)
+    PercentByte = "%" & Right("0" & Hex(value), 2)
+End Function
+
+Function EncodeUrlPath(ByVal value)
+    Dim result
+    Dim position
+    Dim character
+    Dim codePoint
+    Dim lowCode
+
+    result = ""
+    position = 1
+
+    Do While position <= Len(value)
+        character = Mid(value, position, 1)
+        codePoint = AscW(character)
+        If codePoint < 0 Then
+            codePoint = codePoint + 65536
+        End If
+
+        If codePoint >= 55296 And codePoint <= 56319 And _
+            position < Len(value) Then
+
+            lowCode = AscW(Mid(value, position + 1, 1))
+            If lowCode < 0 Then
+                lowCode = lowCode + 65536
+            End If
+
+            If lowCode >= 56320 And lowCode <= 57343 Then
+                codePoint = 65536 + _
+                    (codePoint - 55296) * 1024 + _
+                    (lowCode - 56320)
+                position = position + 1
+            End If
+        End If
+
+        If (codePoint >= 48 And codePoint <= 57) Or _
+            (codePoint >= 65 And codePoint <= 90) Or _
+            (codePoint >= 97 And codePoint <= 122) Or _
+            codePoint = 45 Or codePoint = 46 Or codePoint = 47 Or _
+            codePoint = 58 Or codePoint = 95 Or codePoint = 126 Then
+
+            result = result & Chr(codePoint)
+        ElseIf codePoint <= 127 Then
+            result = result & PercentByte(codePoint)
+        ElseIf codePoint <= 2047 Then
+            result = result & _
+                PercentByte(192 + Int(codePoint / 64)) & _
+                PercentByte(128 + (codePoint Mod 64))
+        ElseIf codePoint <= 65535 Then
+            result = result & _
+                PercentByte(224 + Int(codePoint / 4096)) & _
+                PercentByte(128 + (Int(codePoint / 64) Mod 64)) & _
+                PercentByte(128 + (codePoint Mod 64))
+        Else
+            result = result & _
+                PercentByte(240 + Int(codePoint / 262144)) & _
+                PercentByte(128 + (Int(codePoint / 4096) Mod 64)) & _
+                PercentByte(128 + (Int(codePoint / 64) Mod 64)) & _
+                PercentByte(128 + (codePoint Mod 64))
+        End If
+
+        position = position + 1
+    Loop
+
+    EncodeUrlPath = result
 End Function
 
 Sub AddScriptLine(ByRef scriptText, ByVal lineText)
@@ -579,10 +648,11 @@ If RestoreAndPositionEdgeWindow(appTitle, False) Then
 End If
 
 If Left(htmlPath, 2) = "\\" Then
-    fileUrl = "file:" & Replace(htmlPath, "\", "/")
+    fileUrl = "file:" & EncodeUrlPath(Replace(htmlPath, "\", "/"))
 Else
-    fileUrl = "file:///" & Replace(htmlPath, "\", "/")
+    fileUrl = "file:///" & EncodeUrlPath(Replace(htmlPath, "\", "/"))
 End If
+WriteLauncherLog "FILE URL=" & fileUrl
 
 On Error Resume Next
 Err.Clear
@@ -611,13 +681,14 @@ If launchErrorNumber <> 0 Then
 End If
 On Error GoTo 0
 
-WScript.Sleep 1500
-launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, True)
-
-If Not launchedWindowFound Then
-    WScript.Sleep 2500
+launchedWindowFound = False
+For waitCount = 1 To 6
+    WScript.Sleep 1500
     launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, True)
-End If
+    If launchedWindowFound Then
+        Exit For
+    End If
+Next
 
 ReleaseLaunchLock lockPath
 
