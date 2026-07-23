@@ -2,7 +2,6 @@ Option Explicit
 
 Const APP_NAME = "NC-HEADRE-GEN"
 Const HTML_FILE_NAME = "index.html"
-Const ICON_FILE_NAME = "appicon.png"
 Const REQUIRED_WIDTH = 624
 Const REQUIRED_HEIGHT = 980
 Const LAUNCHER_VERSION = "2026.07.23.3"
@@ -20,7 +19,6 @@ Dim edgePath
 Dim edgeUserDataFolder
 Dim logFolder
 Dim logPath
-Dim iconSourcePath
 Dim lockPath
 Dim hasLaunchLock
 Dim waitCount
@@ -29,7 +27,6 @@ Dim launchCommand
 Dim launchErrorNumber
 Dim launchErrorDescription
 Dim launchedWindowFound
-Dim shortcutUpdated
 
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -374,143 +371,6 @@ Sub ReleaseLaunchLock(ByVal folderPath)
     On Error GoTo 0
 End Sub
 
-Function CreateShortcutIcon(ByVal sourcePngPath, ByVal destinationIconPath)
-    Dim tempFolder
-    Dim tempPsPath
-    Dim psFile
-    Dim psScript
-    Dim powerShellPath
-    Dim command
-    Dim exitCode
-
-    CreateShortcutIcon = False
-    If Not fso.FileExists(sourcePngPath) Then
-        Exit Function
-    End If
-
-    tempFolder = shell.ExpandEnvironmentStrings("%TEMP%")
-    tempPsPath = fso.BuildPath(tempFolder, fso.GetTempName & ".ps1")
-    powerShellPath = shell.ExpandEnvironmentStrings( _
-        "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe")
-
-    psScript = ""
-    AddScriptLine psScript, "param([string]$SourcePng, [string]$DestinationIco)"
-    AddScriptLine psScript, "$ErrorActionPreference = 'Stop'"
-    AddScriptLine psScript, "Add-Type -AssemblyName System.Drawing"
-    AddScriptLine psScript, "$source = $null"
-    AddScriptLine psScript, "$canvas = $null"
-    AddScriptLine psScript, "$graphics = $null"
-    AddScriptLine psScript, "$icon = $null"
-    AddScriptLine psScript, "$stream = $null"
-    AddScriptLine psScript, "try {"
-    AddScriptLine psScript, "    $source = [System.Drawing.Image]::FromFile($SourcePng)"
-    AddScriptLine psScript, "    $canvas = New-Object System.Drawing.Bitmap 256, 256"
-    AddScriptLine psScript, "    $graphics = [System.Drawing.Graphics]::FromImage($canvas)"
-    AddScriptLine psScript, "    $graphics.Clear([System.Drawing.Color]::Transparent)"
-    AddScriptLine psScript, "    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic"
-    AddScriptLine psScript, "    $scale = [Math]::Min(256 / $source.Width, 256 / $source.Height)"
-    AddScriptLine psScript, "    $width = [Math]::Max(1, [int][Math]::Round($source.Width * $scale))"
-    AddScriptLine psScript, "    $height = [Math]::Max(1, [int][Math]::Round($source.Height * $scale))"
-    AddScriptLine psScript, "    $x = [int][Math]::Floor((256 - $width) / 2)"
-    AddScriptLine psScript, "    $y = [int][Math]::Floor((256 - $height) / 2)"
-    AddScriptLine psScript, "    $graphics.DrawImage($source, $x, $y, $width, $height)"
-    AddScriptLine psScript, "    $icon = [System.Drawing.Icon]::FromHandle($canvas.GetHicon())"
-    AddScriptLine psScript, "    $stream = [System.IO.File]::Open("
-    AddScriptLine psScript, "        $DestinationIco, [System.IO.FileMode]::Create)"
-    AddScriptLine psScript, "    $icon.Save($stream)"
-    AddScriptLine psScript, "} finally {"
-    AddScriptLine psScript, "    if ($stream) { $stream.Dispose() }"
-    AddScriptLine psScript, "    if ($icon) { $icon.Dispose() }"
-    AddScriptLine psScript, "    if ($graphics) { $graphics.Dispose() }"
-    AddScriptLine psScript, "    if ($canvas) { $canvas.Dispose() }"
-    AddScriptLine psScript, "    if ($source) { $source.Dispose() }"
-    AddScriptLine psScript, "}"
-    AddScriptLine psScript, "if (Test-Path -LiteralPath $DestinationIco) { exit 0 }"
-    AddScriptLine psScript, "exit 1"
-
-    On Error Resume Next
-    Set psFile = fso.CreateTextFile(tempPsPath, True, False)
-
-    If Err.Number = 0 Then
-        psFile.Write psScript
-        psFile.Close
-
-        command = QuoteArgument(powerShellPath) & _
-            " -NoProfile -NonInteractive -ExecutionPolicy Bypass" & _
-            " -WindowStyle Hidden -File " & QuoteArgument(tempPsPath) & _
-            " " & QuoteArgument(sourcePngPath) & _
-            " " & QuoteArgument(destinationIconPath)
-
-        Err.Clear
-        exitCode = shell.Run(command, 0, True)
-        If Err.Number = 0 And exitCode = 0 And _
-            fso.FileExists(destinationIconPath) Then
-            CreateShortcutIcon = True
-        End If
-    End If
-
-    Err.Clear
-    If fso.FileExists(tempPsPath) Then
-        fso.DeleteFile tempPsPath, True
-    End If
-    On Error GoTo 0
-End Function
-
-Function EnsureDesktopShortcut( _
-    ByVal scriptPath, _
-    ByVal workingFolder, _
-    ByVal sourcePngPath, _
-    ByVal edgeExecutable)
-
-    Dim desktopFolder
-    Dim shortcutPath
-    Dim iconFolder
-    Dim iconPath
-    Dim launcher
-    Dim wscriptPath
-
-    EnsureDesktopShortcut = False
-    On Error Resume Next
-
-    desktopFolder = shell.SpecialFolders("Desktop")
-    shortcutPath = fso.BuildPath(desktopFolder, APP_NAME & ".lnk")
-
-    iconFolder = fso.BuildPath( _
-        shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
-    If Not fso.FolderExists(iconFolder) Then
-        fso.CreateFolder iconFolder
-    End If
-
-    iconPath = fso.BuildPath(iconFolder, APP_NAME & ".ico")
-    If Not fso.FileExists(iconPath) Then
-        CreateShortcutIcon sourcePngPath, iconPath
-    End If
-
-    wscriptPath = fso.BuildPath( _
-        shell.ExpandEnvironmentStrings("%SystemRoot%"), "System32\wscript.exe")
-
-    Set launcher = shell.CreateShortcut(shortcutPath)
-    launcher.TargetPath = wscriptPath
-    launcher.Arguments = QuoteArgument(scriptPath)
-    launcher.WorkingDirectory = workingFolder
-    launcher.Description = UnicodeText( _
-        "4E 43 2D 48 45 41 44 52 45 2D 47 45 4E 3092 5C02 7528 " & _
-        "753B 9762 3067 958B 304D 307E 3059")
-
-    If fso.FileExists(iconPath) Then
-        launcher.IconLocation = iconPath & ",0"
-    ElseIf fso.FileExists(edgeExecutable) Then
-        launcher.IconLocation = edgeExecutable & ",0"
-    End If
-
-    Err.Clear
-    launcher.Save
-    If Err.Number = 0 Then
-        EnsureDesktopShortcut = True
-    End If
-    On Error GoTo 0
-End Function
-
 Sub ShowNasError(ByVal targetPath)
     Dim message
 
@@ -584,7 +444,6 @@ If Not fso.FileExists(htmlPath) Then
         fso.BuildPath(targetAppFolder, HTML_FILE_NAME))
 End If
 
-iconSourcePath = fso.BuildPath(targetAppFolder, ICON_FILE_NAME)
 WriteLauncherLog _
     "START version=" & LAUNCHER_VERSION & _
     " script=" & WScript.ScriptFullName & _
@@ -603,10 +462,6 @@ If Len(edgePath) = 0 Then
     WScript.Quit 1
 End If
 WriteLauncherLog "EDGE path=" & edgePath
-
-shortcutUpdated = EnsureDesktopShortcut( _
-    WScript.ScriptFullName, appFolder, iconSourcePath, edgePath)
-WriteLauncherLog "SHORTCUT refreshed=" & CStr(shortcutUpdated)
 
 edgeUserDataFolder = fso.BuildPath( _
     shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
