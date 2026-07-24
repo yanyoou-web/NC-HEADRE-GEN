@@ -1245,6 +1245,7 @@ const I18N = {
     q1_hint: "対象のCNC機械番号を選択します。",
     q1_tetsugeta_label: "鉄ゲタNo.（自動セット）",
     q1_tetsugeta_change: "変更する",
+    q1_select_machine: "設備を選択してください",
 
     q2_title: "加工後の全長を入力してください",
     q2_hint: "ゲタ頂点から加工原点までの距離（mm）",
@@ -1417,6 +1418,7 @@ const I18N = {
     q1_hint: "Chọn số máy CNC cần sử dụng.",
     q1_tetsugeta_label: "Số đế sắt (鉄ゲタNo.) (tự động chọn)",
     q1_tetsugeta_change: "Thay đổi",
+    q1_select_machine: "Vui lòng chọn máy",
 
     q2_title: "Nhập tổng chiều dài sau gia công",
     q2_hint: "Khoảng cách từ đỉnh đế (ゲタ) đến điểm gốc gia công (mm)",
@@ -2095,13 +2097,14 @@ function renderStep() {
       });
       html += `</div>`;
       html += `<div id="errBox" role="alert" aria-live="polite"></div>`;
-      html += `<div class="field" id="tetsugetaInlineWrap" style="display:${state.kikaiNo ? "block" : "none"};margin-top:4px;">
+      html += `<div class="field" id="tetsugetaInlineWrap" style="display:block;margin-top:4px;">
         <div class="info-box" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-          <div>
+          <div id="tetsugetaInlineEmpty">${t("q1_select_machine")}</div>
+          <div id="tetsugetaInlineDetail" style="display:none;">
             ${t("q1_tetsugeta_label")}：<span class="val" id="tetsugetaInlineNo"></span>
             <div class="q-hint" style="margin:4px 0 0;" id="tetsugetaInlineSpec"></div>
           </div>
-          <button type="button" class="ghost" id="btnTetsugetaChange" style="flex:0 0 auto;width:auto;padding:8px 14px;">${t("q1_tetsugeta_change")}</button>
+          <button type="button" class="ghost" id="btnTetsugetaChange" style="display:none;flex:0 0 auto;width:auto;padding:8px 14px;">${t("q1_tetsugeta_change")}</button>
         </div>
         <div id="tetsugetaChangeWrap" style="display:none;margin-top:10px;">
           <select id="tetsugetaChangeSelect" aria-label="${t('q1_tetsugeta_label')}"></select>
@@ -2113,8 +2116,22 @@ function renderStep() {
       function updateTetsugetaInline() {
         const wrap = document.getElementById("tetsugetaInlineWrap");
         if (!wrap) return;
-        if (!state.kikaiNo) { wrap.style.display = "none"; return; }
+        const emptyEl = document.getElementById("tetsugetaInlineEmpty");
+        const detailEl = document.getElementById("tetsugetaInlineDetail");
+        const changeBtn = document.getElementById("btnTetsugetaChange");
+        const changeWrap = document.getElementById("tetsugetaChangeWrap");
+        if (!state.kikaiNo) {
+          wrap.style.display = "block";
+          emptyEl.style.display = "block";
+          detailEl.style.display = "none";
+          changeBtn.style.display = "none";
+          changeWrap.style.display = "none";
+          return;
+        }
         wrap.style.display = "block";
+        emptyEl.style.display = "none";
+        detailEl.style.display = "block";
+        changeBtn.style.display = "inline-block";
         document.getElementById("tetsugetaInlineNo").textContent = state.tetsugetaNo || "";
         const specEl = document.getElementById("tetsugetaInlineSpec");
         const tg = Logic.tetsugetaMaster[state.tetsugetaNo];
