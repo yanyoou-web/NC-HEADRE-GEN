@@ -4,7 +4,7 @@ Const APP_NAME = "NC-HEADRE-GEN"
 Const HTML_FILE_NAME = "index.html"
 Const REQUIRED_WIDTH = 655
 Const REQUIRED_HEIGHT = 1030
-Const LAUNCHER_VERSION = "2026.07.23.3"
+Const LAUNCHER_VERSION = "2026.07.24.1"
 
 Dim appTitle
 Dim shell
@@ -179,7 +179,7 @@ Function FindEdgePath()
     End If
 End Function
 
-Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
+Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal userDataFolder, ByVal useCursorMonitor)
     Dim tempFolder
     Dim tempPsPath
     Dim psFile
@@ -197,6 +197,7 @@ Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
     psScript = ""
     AddScriptLine psScript, "param("
     AddScriptLine psScript, "    [string]$WindowTitle,"
+    AddScriptLine psScript, "    [string]$UserDataFolder,"
     AddScriptLine psScript, "    [int]$UseCursorMonitor,"
     AddScriptLine psScript, "    [int]$RequiredWidth,"
     AddScriptLine psScript, "    [int]$RequiredHeight"
@@ -209,6 +210,24 @@ Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
     AddScriptLine psScript, "            [System.StringComparison]::OrdinalIgnoreCase"
     AddScriptLine psScript, "        )"
     AddScriptLine psScript, "    } | Select-Object -First 1"
+    AddScriptLine psScript, "if ($null -eq $process -and "
+    AddScriptLine psScript, "    -not [string]::IsNullOrWhiteSpace($UserDataFolder)) {"
+    AddScriptLine psScript, "    $edgeProcesses = Get-CimInstance Win32_Process -Filter ""Name = 'msedge.exe'"" -ErrorAction SilentlyContinue |"
+    AddScriptLine psScript, "        Where-Object {"
+    AddScriptLine psScript, "            $_.CommandLine -and $_.CommandLine.IndexOf("
+    AddScriptLine psScript, "                $UserDataFolder,"
+    AddScriptLine psScript, "                [System.StringComparison]::OrdinalIgnoreCase) -ge 0"
+    AddScriptLine psScript, "        } | Sort-Object CreationDate -Descending"
+    AddScriptLine psScript, "    foreach ($edgeProcess in $edgeProcesses) {"
+    AddScriptLine psScript, "        $candidate = Get-Process -Id $edgeProcess.ProcessId -ErrorAction SilentlyContinue"
+    AddScriptLine psScript, "        if ($null -eq $candidate) { continue }"
+    AddScriptLine psScript, "        $candidate.Refresh()"
+    AddScriptLine psScript, "        if ($candidate.MainWindowHandle -ne [System.IntPtr]::Zero) {"
+    AddScriptLine psScript, "            $process = $candidate"
+    AddScriptLine psScript, "            break"
+    AddScriptLine psScript, "        }"
+    AddScriptLine psScript, "    }"
+    AddScriptLine psScript, "}"
     AddScriptLine psScript, "if ($null -eq $process) { exit 1 }"
     AddScriptLine psScript, "$process.Refresh()"
     AddScriptLine psScript, "$windowHandle = $process.MainWindowHandle"
@@ -309,37 +328,20 @@ Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
     AddScriptLine psScript, "    $scaledHeight, [int][Math]::Floor($workHeight * 0.90))"
     AddScriptLine psScript, "$centerX = $monitorInfo.rcWork.Left + [int](($workWidth - $targetWidth) / 2)"
     AddScriptLine psScript, "$centerY = $monitorInfo.rcWork.Top + [int](($workHeight - $targetHeight) / 2)"
-    AddScriptLine psScript, "if ($isMinimized) {"
-    AddScriptLine psScript, "    $placement = New-Object 'NcLauncher.NativeMethods+WINDOWPLACEMENT'"
-    AddScriptLine psScript, "    $placement.length = [System.Runtime.InteropServices.Marshal]::SizeOf($placement)"
-    AddScriptLine psScript, "    if ([NcLauncher.NativeMethods]::GetWindowPlacement("
-    AddScriptLine psScript, "        $windowHandle, [ref]$placement)) {"
-    AddScriptLine psScript, "        $normalPosition = New-Object 'NcLauncher.NativeMethods+RECT'"
-    AddScriptLine psScript, "        $normalPosition.Left = $centerX"
-    AddScriptLine psScript, "        $normalPosition.Top = $centerY"
-    AddScriptLine psScript, "        $normalPosition.Right = $centerX + $targetWidth"
-    AddScriptLine psScript, "        $normalPosition.Bottom = $centerY + $targetHeight"
-    AddScriptLine psScript, "        $placement.rcNormalPosition = $normalPosition"
-    AddScriptLine psScript, "        $placement.showCmd = 2"
-    AddScriptLine psScript, "        [void][NcLauncher.NativeMethods]::SetWindowPlacement("
-    AddScriptLine psScript, "            $windowHandle, [ref]$placement)"
-    AddScriptLine psScript, "        [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 9)"
-    AddScriptLine psScript, "    } else {"
-    AddScriptLine psScript, "        [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 9)"
-    AddScriptLine psScript, "        Start-Sleep -Milliseconds 120"
-    AddScriptLine psScript, "        [void][NcLauncher.NativeMethods]::SetWindowPos("
-    AddScriptLine psScript, "            $windowHandle, [System.IntPtr]::Zero,"
-    AddScriptLine psScript, "            $centerX, $centerY, $targetWidth, $targetHeight, 68)"
-    AddScriptLine psScript, "    }"
-    AddScriptLine psScript, "} else {"
-    AddScriptLine psScript, "    if ($isMaximized) {"
-    AddScriptLine psScript, "        [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 9)"
-    AddScriptLine psScript, "        Start-Sleep -Milliseconds 120"
-    AddScriptLine psScript, "    }"
-    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::SetWindowPos("
-    AddScriptLine psScript, "        $windowHandle, [System.IntPtr]::Zero,"
-    AddScriptLine psScript, "        $centerX, $centerY, $targetWidth, $targetHeight, 68)"
+    AddScriptLine psScript, "if ($isMinimized -or $isMaximized) {"
+    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 9)"
     AddScriptLine psScript, "}"
+    AddScriptLine psScript, "for ($attempt = 0; $attempt -lt 20; $attempt++) {"
+    AddScriptLine psScript, "    if (-not [NcLauncher.NativeMethods]::IsIconic($windowHandle)) { break }"
+    AddScriptLine psScript, "    Start-Sleep -Milliseconds 100"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "if ([NcLauncher.NativeMethods]::IsIconic($windowHandle)) {"
+    AddScriptLine psScript, "    [void][NcLauncher.NativeMethods]::ShowWindowAsync($windowHandle, 5)"
+    AddScriptLine psScript, "    Start-Sleep -Milliseconds 150"
+    AddScriptLine psScript, "}"
+    AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::SetWindowPos("
+    AddScriptLine psScript, "    $windowHandle, [System.IntPtr]::Zero,"
+    AddScriptLine psScript, "    $centerX, $centerY, $targetWidth, $targetHeight, 68)"
     AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::BringWindowToTop($windowHandle)"
     AddScriptLine psScript, "[void][NcLauncher.NativeMethods]::SetForegroundWindow($windowHandle)"
     AddScriptLine psScript, "exit 0"
@@ -355,6 +357,7 @@ Function RestoreAndPositionEdgeWindow(ByVal windowTitle, ByVal useCursorMonitor)
             " -NoProfile -NonInteractive -ExecutionPolicy Bypass" & _
             " -WindowStyle Hidden -File " & QuoteArgument(tempPsPath) & _
             " " & QuoteArgument(windowTitle) & _
+            " " & QuoteArgument(userDataFolder) & _
             " " & CStr(Abs(CInt(useCursorMonitor))) & _
             " " & CStr(REQUIRED_WIDTH) & _
             " " & CStr(REQUIRED_HEIGHT)
@@ -499,7 +502,7 @@ edgeUserDataFolder = fso.BuildPath( _
     shell.ExpandEnvironmentStrings("%LOCALAPPDATA%"), APP_NAME)
 edgeUserDataFolder = fso.BuildPath(edgeUserDataFolder, "EdgeProfile")
 
-If RestoreAndPositionEdgeWindow(appTitle, False) Then
+If RestoreAndPositionEdgeWindow(appTitle, edgeUserDataFolder, False) Then
     shell.AppActivate appTitle
     WScript.Quit 0
 End If
@@ -517,7 +520,7 @@ If Not hasLaunchLock Then
         End If
     Next
 
-    If RestoreAndPositionEdgeWindow(appTitle, False) Then
+    If RestoreAndPositionEdgeWindow(appTitle, edgeUserDataFolder, False) Then
         shell.AppActivate appTitle
         WScript.Quit 0
     End If
@@ -528,7 +531,7 @@ If Not hasLaunchLock Then
     End If
 End If
 
-If RestoreAndPositionEdgeWindow(appTitle, False) Then
+If RestoreAndPositionEdgeWindow(appTitle, edgeUserDataFolder, False) Then
     ReleaseLaunchLock lockPath
     shell.AppActivate appTitle
     WScript.Quit 0
@@ -572,7 +575,7 @@ On Error GoTo 0
 launchedWindowFound = False
 For waitCount = 1 To 6
     WScript.Sleep 1500
-    launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, True)
+    launchedWindowFound = RestoreAndPositionEdgeWindow(appTitle, edgeUserDataFolder, True)
     If launchedWindowFound Then
         Exit For
     End If
